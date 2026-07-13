@@ -1,0 +1,274 @@
+import type {
+  CategoryReport,
+  Complaint,
+  DashboardStats,
+  Hearing,
+  MonthlyAnalytics,
+  PriorityReport,
+  Resident,
+} from "./types";
+
+export const dashboardStats: DashboardStats = {
+  activeCases: 32,
+  pendingApproval: 15,
+  inProgress: 10,
+  resolvedCases: 189,
+};
+
+export const statusOverview = [
+  { status: "Pending", count: 15 },
+  { status: "In Progress", count: 10 },
+  { status: "Scheduled", count: 8 },
+  { status: "Resolved", count: 189 },
+];
+
+export const monthlyAnalytics: MonthlyAnalytics[] = [
+  { month: "Jan", complaints: 28, resolved: 22, scheduled: 5 },
+  { month: "Feb", complaints: 35, resolved: 30, scheduled: 4 },
+  { month: "Mar", complaints: 42, resolved: 38, scheduled: 6 },
+  { month: "Apr", complaints: 38, resolved: 35, scheduled: 7 },
+  { month: "May", complaints: 45, resolved: 40, scheduled: 8 },
+  { month: "Jun", complaints: 52, resolved: 48, scheduled: 9 },
+];
+
+export const complaints: Complaint[] = [
+  {
+    id: "1",
+    complaintNo: "C-00012",
+    dateFiled: "2026-06-15",
+    complainant: "Juan Dela Cruz",
+    complainantInfo: {
+      name: "Juan Dela Cruz",
+      age: 34,
+      address: "123 Rizal St., Brgy. San Jose",
+      contact: "09171234567",
+    },
+    respondent: "Pedro Santos",
+    respondentInfo: {
+      name: "Pedro Santos",
+      age: 41,
+      address: "125 Rizal St., Brgy. San Jose",
+      contact: "09181234567",
+    },
+    category: "Noise",
+    priority: "High",
+    status: "Pending",
+    description:
+      "Excessive noise from late-night karaoke sessions affecting neighbors' sleep.",
+    evidence: ["noise_recording.mp3", "complaint_photo.jpg"],
+  },
+  {
+    id: "2",
+    complaintNo: "C-00013",
+    dateFiled: "2026-06-18",
+    complainant: "Maria Santos",
+    complainantInfo: {
+      name: "Maria Santos",
+      age: 29,
+      address: "45 Mabini Ave., Brgy. San Jose",
+      contact: "09191234567",
+    },
+    respondent: "Carlos Reyes",
+    respondentInfo: {
+      name: "Carlos Reyes",
+      age: 38,
+      address: "47 Mabini Ave., Brgy. San Jose",
+      contact: "09201234567",
+    },
+    category: "Boundary",
+    priority: "Medium",
+    status: "In Progress",
+    description:
+      "Fence encroachment dispute regarding property boundary line.",
+    evidence: ["survey_map.pdf", "boundary_photo.jpg"],
+    summonNo: "S-00008",
+    hearingDate: "2026-07-10",
+    hearingTime: "9:00 AM",
+    venue: "Barangay Hall Conference Room",
+  },
+  {
+    id: "3",
+    complaintNo: "C-00014",
+    dateFiled: "2026-06-20",
+    complainant: "Pedro Reyes",
+    complainantInfo: {
+      name: "Pedro Reyes",
+      age: 45,
+      address: "78 Bonifacio St., Brgy. San Jose",
+      contact: "09211234567",
+    },
+    respondent: "Ana Garcia",
+    respondentInfo: {
+      name: "Ana Garcia",
+      age: 33,
+      address: "80 Bonifacio St., Brgy. San Jose",
+      contact: "09221234567",
+    },
+    category: "Harassment",
+    priority: "High",
+    status: "Scheduled",
+    description: "Verbal harassment and threats reported by complainant.",
+    evidence: ["witness_statement.pdf"],
+    summonNo: "S-00009",
+    hearingDate: "2026-07-12",
+    hearingTime: "10:00 AM",
+    venue: "Barangay Hall",
+    mediationNotes: "First hearing conducted. Both parties present.",
+  },
+  {
+    id: "4",
+    complaintNo: "C-00015",
+    dateFiled: "2026-05-10",
+    complainant: "Rosa Mendoza",
+    complainantInfo: {
+      name: "Rosa Mendoza",
+      age: 52,
+      address: "12 Luna St., Brgy. San Jose",
+      contact: "09231234567",
+    },
+    respondent: "Miguel Torres",
+    respondentInfo: {
+      name: "Miguel Torres",
+      age: 48,
+      address: "14 Luna St., Brgy. San Jose",
+      contact: "09241234567",
+    },
+    category: "Animal Complaint",
+    priority: "Normal",
+    status: "Resolved",
+    description: "Stray dogs causing disturbance in the neighborhood.",
+    evidence: ["incident_report.pdf"],
+  },
+  {
+    id: "5",
+    complaintNo: "C-00016",
+    dateFiled: "2026-06-22",
+    complainant: "Elena Cruz",
+    complainantInfo: {
+      name: "Elena Cruz",
+      age: 36,
+      address: "90 Aguinaldo Blvd., Brgy. San Jose",
+      contact: "09251234567",
+    },
+    respondent: "Roberto Lim",
+    respondentInfo: {
+      name: "Roberto Lim",
+      age: 44,
+      address: "92 Aguinaldo Blvd., Brgy. San Jose",
+      contact: "09261234567",
+    },
+    category: "Noise",
+    priority: "Medium",
+    status: "Pending",
+    description: "Loud construction work during prohibited hours.",
+    evidence: ["video_evidence.mp4"],
+  },
+];
+
+export const scheduledHearings: Hearing[] = [
+  {
+    id: "h1",
+    complaintId: "3",
+    complaintNo: "C-00014",
+    date: "2026-07-12",
+    time: "10:00 AM",
+    venue: "Barangay Hall",
+    hearingNumber: 2,
+  },
+  {
+    id: "h2",
+    complaintId: "2",
+    complaintNo: "C-00013",
+    date: "2026-07-15",
+    time: "2:00 PM",
+    venue: "Barangay Hall Conference Room",
+    hearingNumber: 2,
+  },
+];
+
+export const residents: Resident[] = [
+  {
+    id: "R-001",
+    fullName: "Juan Dela Cruz",
+    birthdate: "1992-03-15",
+    age: 34,
+    gender: "Male",
+    civilStatus: "Married",
+    address: "123 Rizal St., Brgy. San Jose",
+    contactNumber: "09171234567",
+    email: "juan.delacruz@email.com",
+    householdNumber: "HH-0045",
+    emergencyContact: "Maria Dela Cruz - 09171234568",
+    dateRegistered: "2024-01-10",
+  },
+  {
+    id: "R-002",
+    fullName: "Maria Santos",
+    birthdate: "1997-07-22",
+    age: 29,
+    gender: "Female",
+    civilStatus: "Single",
+    address: "45 Mabini Ave., Brgy. San Jose",
+    contactNumber: "09191234567",
+    email: "maria.santos@email.com",
+    householdNumber: "HH-0089",
+    emergencyContact: "Pedro Santos - 09191234568",
+    dateRegistered: "2024-02-15",
+  },
+  {
+    id: "R-003",
+    fullName: "Pedro Reyes",
+    birthdate: "1981-11-08",
+    age: 45,
+    gender: "Male",
+    civilStatus: "Married",
+    address: "78 Bonifacio St., Brgy. San Jose",
+    contactNumber: "09211234567",
+    email: "pedro.reyes@email.com",
+    householdNumber: "HH-0123",
+    emergencyContact: "Ana Reyes - 09211234568",
+    dateRegistered: "2024-03-20",
+  },
+  {
+    id: "R-004",
+    fullName: "Rosa Mendoza",
+    birthdate: "1974-05-30",
+    age: 52,
+    gender: "Female",
+    civilStatus: "Widowed",
+    address: "12 Luna St., Brgy. San Jose",
+    contactNumber: "09231234567",
+    email: "rosa.mendoza@email.com",
+    householdNumber: "HH-0156",
+    emergencyContact: "Carlos Mendoza - 09231234568",
+    dateRegistered: "2024-04-05",
+  },
+];
+
+export const categoryReports: CategoryReport[] = [
+  { category: "Noise Complaint", total: 58 },
+  { category: "Boundary Dispute", total: 31 },
+  { category: "Harassment", total: 24 },
+  { category: "Animal Complaint", total: 19 },
+];
+
+export const priorityReports: PriorityReport[] = [
+  { priority: "High", cases: 24 },
+  { priority: "Medium", cases: 51 },
+  { priority: "Normal", cases: 39 },
+];
+
+export const reportStats = {
+  totalComplaints: 246,
+  resolvedRate: 76.8,
+  avgResolutionTime: 12.5,
+  activeCases: 32,
+};
+
+export function getComplaintById(id: string): Complaint | undefined {
+  return complaints.find((c) => c.id === id);
+}
+
+export function getResidentById(id: string): Resident | undefined {
+  return residents.find((r) => r.id === id);
+}
