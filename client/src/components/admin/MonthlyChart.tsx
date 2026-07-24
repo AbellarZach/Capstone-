@@ -14,7 +14,7 @@ import type { MonthlyAnalytics } from "@/lib/types";
 
 export function MonthlyChart({ data }: { data: MonthlyAnalytics[] }) {
   return (
-    <ResponsiveContainer width="100%" height={300}>
+    <ResponsiveContainer width="100%" height={300} >
       <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#9ca3af" />
@@ -46,11 +46,12 @@ export function MonthlyChart({ data }: { data: MonthlyAnalytics[] }) {
         <Line
           type="monotone"
           dataKey="scheduled"
-          name="Scheduled Hearings"
+          name="Scheduled"
           stroke="#a855f7"
           strokeWidth={2}
           dot={{ fill: "#a855f7", r: 4 }}
         />
+
       </LineChart>
     </ResponsiveContainer>
   );

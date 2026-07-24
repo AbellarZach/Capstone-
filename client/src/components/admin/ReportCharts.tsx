@@ -29,9 +29,6 @@ export function CategoryPieChart({ data }: { data: CategoryReport[] }) {
           outerRadius={100}
           dataKey="total"
           nameKey="category"
-          label={({ category, percent }) =>
-            `${category.split(" ")[0]} ${(percent * 100).toFixed(0)}%`
-          }
           labelLine={false}
         >
           {data.map((_, index) => (

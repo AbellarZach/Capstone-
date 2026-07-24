@@ -13,6 +13,7 @@ import { MaterialIcon } from "@/components/admin/MaterialIcon";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
+    total: 0,
     pending: 0,
     inProgress: 0,
     scheduled: 0,
@@ -64,7 +65,13 @@ export default function AdminDashboard() {
         <p className="mt-1 text-gray-500">Welcome back, Administrator</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-7 py-7">
+        <GlassStatCard
+          label="Total"
+          value={stats.total}
+          icon="description"
+          variant="blue"
+        />
         <GlassStatCard
           label="Pending"
           value={stats.pending}
@@ -103,16 +110,16 @@ export default function AdminDashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="admin-card p-5">
-          <h3 className="mb-4 text-lg font-semibold text-gray-900">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 ">
+        <div className="admin-card p-5 ">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900 ">
             Case Overview
           </h3>
           <StatusOverview data={statusOverview} />
         </div>
 
-        <div className="admin-card p-5">
-          <h3 className="mb-4 text-lg font-semibold text-gray-900">
+        <div className="admin-card p-5 ">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900 ">
             Monthly Complaint Analytics
           </h3>
           <MonthlyChart data={monthlyAnalytics} />

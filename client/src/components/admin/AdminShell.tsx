@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
-import { TopNav } from "./TopNav";
+
 
 const pageTitles: Record<string, string> = {
   "/admin": "Dashboard",
@@ -35,10 +35,6 @@ export function AdminShell({
     <div className="min-h-screen bg-[var(--background)]">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="lg:pl-[var(--sidebar-width)]">
-        <TopNav
-          title={getPageTitle(pathname)}
-          onMenuClick={() => setSidebarOpen(true)}
-        />
         <main className="p-3 sm:p-5 lg:p-6">
           <div className="admin-content">{children}</div>
         </main>

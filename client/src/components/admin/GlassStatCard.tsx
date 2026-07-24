@@ -31,7 +31,7 @@ export function GlassStatCard({
 }: GlassStatCardProps) {
   return (
     <div
-      className={`glass-card admin-card p-4 bg-gradient-to-br ${variants[variant]}`}
+      className={`glass-card admin-card p-4 bg-gradient-to-br  ${variants[variant]}`}
     >
       <div className="flex items-start justify-between">
         <div>

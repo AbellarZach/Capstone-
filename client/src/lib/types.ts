@@ -53,17 +53,32 @@ export interface Hearing {
 
 export interface Resident {
   id: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  suffix?: string;
   fullName: string;
   birthdate: string;
+  birthPlace?: string;
   age: number;
   gender: string;
   civilStatus: string;
+  nationality?: string;
+  religion?: string;
+  occupation?: string;
   address: string;
   contactNumber: string;
   email: string;
-  householdNumber: string;
-  emergencyContact: string;
-  dateRegistered: string;
+  pwdIdNo?: string;
+  familyMonthlyIncome?: string;
+  indigent?: string;
+  registeredVoter?: string;
+  precinctNo?: string;
+  voterIdNo?: string;
+  photoUrl?: string;
+  householdNumber?: string;
+  emergencyContact?: string;
+  dateRegistered?: string;
 }
 
 export interface DashboardStats {

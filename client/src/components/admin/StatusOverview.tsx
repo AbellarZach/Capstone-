@@ -12,8 +12,8 @@ export function StatusOverview({ data }: StatusOverviewProps) {
     "In Progress": "bg-primary",
     Scheduled: "bg-purple-500",
     Resolved: "bg-green-500",
-    Cancelled: "bg-gray-400",
-    Unsettled: "bg-red-500",
+    Cancelled: "bg-red-500",
+    Unsettled: "bg-red-400",
   };
 
   return (
