@@ -6,7 +6,7 @@ export type ComplaintStatus =
   | "Cancelled"
   | "Unsettled";
 
-export type Priority = "High" | "Medium" | "Normal";
+export type Priority = "High" | "Medium" | "Low" | "Normal" | "Critical";
 
 export interface PersonInfo {
   name: string;
@@ -29,6 +29,7 @@ export interface Complaint {
   status: ComplaintStatus;
   description: string;
   evidence: string[];
+  latestHearingNumber?: number;
   hearingDate?: string;
   hearingTime?: string;
   venue?: string;
@@ -41,13 +42,19 @@ export interface Complaint {
 export interface Hearing {
   id: string;
   complaintId: string;
-  complaintNo: string;
+  complaintNo?: string;
   complainant?: string;
   respondent?: string;
   date: string;
   time: string;
+  timeConsumed?: string;
+  assignedMediator?: string;
   venue: string;
   hearingNumber: number;
+  witnesses?: string[];
+  decision?: string;
+  mediationNotes?: string;
+  previousNotes?: string;
   status?: string;
 }
 
@@ -91,8 +98,12 @@ export interface DashboardStats {
 export interface MonthlyAnalytics {
   month: string;
   complaints: number;
-  resolved: number;
-  scheduled: number;
+  pending?: number;
+  inProgress?: number;
+  scheduled?: number;
+  resolved?: number;
+  cancelled?: number;
+  unsettled?: number;
 }
 
 export interface CategoryReport {

@@ -111,7 +111,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 ">
-        <div className="admin-card p-5 ">
+        <div className="admin-card p-5">
           <h3 className="mb-4 text-lg font-semibold text-gray-900 ">
             Case Overview
           </h3>

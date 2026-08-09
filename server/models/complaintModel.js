@@ -32,6 +32,7 @@ function mapComplaint(row) {
       age: row.respondent_age ?? 0,
       address: row.respondent_address ?? "",
       contact: row.respondent_contact ?? "",
+      email: row.respondent_email ?? "",
     },
     category: row.category,
     priority: normalizePriority(row.priority),
@@ -39,6 +40,7 @@ function mapComplaint(row) {
     description: row.description ?? "",
     evidence: row.evidence ?? [],
     summonNo: row.summon_no,
+    latestHearingNumber: row.latest_hearing_number ? Number(row.latest_hearing_number) : 0,
     hearingDate: row.hearing_date?.toISOString?.().slice(0, 10) ?? row.hearing_date,
     hearingTime: row.hearing_time,
     venue: row.venue,
@@ -52,6 +54,7 @@ function mapComplaint(row) {
 const complaintSelect = `
   SELECT c.*,
     s.summon_no, s.hearing_date, s.hearing_time, s.venue,
+    (SELECT MAX(hearing_number) FROM hearings h WHERE h.complaint_id = c.id) AS latest_hearing_number,
     (SELECT mediation_notes FROM hearings h WHERE h.complaint_id = c.id ORDER BY h.hearing_number DESC LIMIT 1) AS mediation_notes,
     (SELECT previous_notes FROM hearings h WHERE h.complaint_id = c.id ORDER BY h.hearing_number DESC LIMIT 1) AS previous_notes,
     (SELECT witnesses FROM hearings h WHERE h.complaint_id = c.id ORDER BY h.hearing_number DESC LIMIT 1) AS witnesses
@@ -59,19 +62,54 @@ const complaintSelect = `
   LEFT JOIN summons s ON s.complaint_id = c.id
 `;
 
-async function findAll() {
-  const { rows } = await pool.query(
-    `${complaintSelect}
-     ORDER BY
-       CASE COALESCE(c.priority, 'Normal')
-         WHEN 'High' THEN 1
-         WHEN 'Medium' THEN 2
-         WHEN 'Low' THEN 3
-         WHEN 'Normal' THEN 3
-         ELSE 4
-       END ASC,
-       c.created_at DESC`
-  );
+async function findAll(filters = {}) {
+  const whereClauses = [];
+  const queryParams = [];
+
+  if (filters.search) {
+    queryParams.push(`%${filters.search.trim()}%`);
+    const idx = queryParams.length;
+    whereClauses.push(
+      `(c.complaint_no ILIKE $${idx} OR c.complainant_name ILIKE $${idx} OR c.respondent_name ILIKE $${idx} OR c.category ILIKE $${idx} OR c.status ILIKE $${idx})`
+    );
+  }
+
+  if (filters.status) {
+    queryParams.push(filters.status);
+    const idx = queryParams.length;
+    whereClauses.push(`c.status = $${idx}`);
+  }
+
+  if (filters.priority) {
+    queryParams.push(filters.priority);
+    const idx = queryParams.length;
+    whereClauses.push(`c.priority = $${idx}`);
+  }
+
+  if (filters.category) {
+    queryParams.push(filters.category);
+    const idx = queryParams.length;
+    whereClauses.push(`c.category = $${idx}`);
+  }
+
+  const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+
+  const sql = `
+    ${complaintSelect}
+    ${whereSql}
+    ORDER BY
+      CASE COALESCE(c.priority, 'Normal')
+        WHEN 'High' THEN 1
+        WHEN 'Critical' THEN 1
+        WHEN 'Medium' THEN 2
+        WHEN 'Low' THEN 3
+        WHEN 'Normal' THEN 3
+        ELSE 4
+      END ASC,
+      c.created_at DESC
+  `;
+
+  const { rows } = await pool.query(sql, queryParams);
   return rows.map(mapComplaint);
 }
 
@@ -98,6 +136,29 @@ async function updateStatus(id, status) {
   return mapComplaint(rows[0]);
 }
 
+async function updateRespondent(id, respondentData) {
+  const { name, address, contact, email, age } = respondentData;
+  const { rows } = await pool.query(
+    `UPDATE complaints
+     SET respondent_name = COALESCE($1, respondent_name),
+         respondent_address = COALESCE($2, respondent_address),
+         respondent_contact = COALESCE($3, respondent_contact),
+         respondent_email = COALESCE($4, respondent_email),
+         respondent_age = COALESCE($5, respondent_age),
+         updated_at = NOW()
+     WHERE id = $6 RETURNING *`,
+    [name, address, contact, email, age ? Number(age) : null, id]
+  );
+  return mapComplaint(rows[0]);
+}
+
+async function getCategories() {
+  const { rows } = await pool.query(`
+    SELECT DISTINCT category FROM complaints WHERE category IS NOT NULL AND category != '' ORDER BY category ASC
+  `);
+  return rows.map((r) => r.category);
+}
+
 async function getStatusCounts() {
   const { rows } = await pool.query(`
     SELECT status, COUNT(*)::int AS count FROM complaints GROUP BY status
@@ -121,25 +182,19 @@ async function getMonthlyAnalytics() {
   const { rows } = await pool.query(`
     SELECT
       TO_CHAR(d.month, 'Mon') AS month,
-      COALESCE(submitted.count, 0)::int AS complaints,
-      COALESCE(resolved.count, 0)::int AS resolved,
-      COALESCE(scheduled.count, 0)::int AS scheduled
+      COALESCE(COUNT(c.id), 0)::int AS complaints,
+      COALESCE(COUNT(CASE WHEN c.status = 'Pending' THEN 1 END), 0)::int AS pending,
+      COALESCE(COUNT(CASE WHEN c.status = 'In Progress' THEN 1 END), 0)::int AS "inProgress",
+      COALESCE(COUNT(CASE WHEN c.status = 'Scheduled' THEN 1 END), 0)::int AS scheduled,
+      COALESCE(COUNT(CASE WHEN c.status = 'Resolved' THEN 1 END), 0)::int AS resolved,
+      COALESCE(COUNT(CASE WHEN c.status = 'Cancelled' THEN 1 END), 0)::int AS cancelled,
+      COALESCE(COUNT(CASE WHEN c.status = 'Unsettled' THEN 1 END), 0)::int AS unsettled
     FROM (
       SELECT DATE_TRUNC('month', CURRENT_DATE) - (n || ' months')::interval AS month
       FROM generate_series(5, 0, -1) AS n
     ) d
-    LEFT JOIN (
-      SELECT DATE_TRUNC('month', created_at) AS month, COUNT(*) AS count
-      FROM complaints GROUP BY 1
-    ) submitted ON submitted.month = d.month
-    LEFT JOIN (
-      SELECT DATE_TRUNC('month', resolved_at) AS month, COUNT(*) AS count
-      FROM complaints WHERE resolved_at IS NOT NULL GROUP BY 1
-    ) resolved ON resolved.month = d.month
-    LEFT JOIN (
-      SELECT DATE_TRUNC('month', hearing_date) AS month, COUNT(*) AS count
-      FROM hearings GROUP BY 1
-    ) scheduled ON scheduled.month = d.month
+    LEFT JOIN complaints c ON DATE_TRUNC('month', c.created_at) = d.month
+    GROUP BY d.month
     ORDER BY d.month
   `);
   return rows;
@@ -172,6 +227,8 @@ module.exports = {
   findRecent,
   findById,
   updateStatus,
+  updateRespondent,
+  getCategories,
   getStatusCounts,
   getMonthlyAnalytics,
   getCategoryCounts,

@@ -3,6 +3,7 @@ import type {
   Complaint,
   Hearing,
   MonthlyAnalytics,
+  PersonInfo,
   Resident,
 } from "@/lib/types";
 
@@ -55,7 +56,19 @@ export interface Summon {
 }
 
 export const complaintsApi = {
-  getAll: () => api.get<Complaint[]>("/api/complaints").then((r) => r.data),
+  getAll: (filters?: { search?: string; status?: string; priority?: string; category?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.search) params.append("search", filters.search);
+    if (filters?.status) params.append("status", filters.status);
+    if (filters?.priority) params.append("priority", filters.priority);
+    if (filters?.category) params.append("category", filters.category);
+    const queryString = params.toString();
+    return api
+      .get<Complaint[]>(`/api/complaints${queryString ? `?${queryString}` : ""}`)
+      .then((r) => r.data);
+  },
+  getCategories: () =>
+    api.get<string[]>("/api/complaints/categories").then((r) => r.data),
   getRecent: (limit = 10) =>
     api.get<Complaint[]>(`/api/complaints/recent?limit=${limit}`).then((r) => r.data),
   getById: (id: string) =>
@@ -66,20 +79,30 @@ export const complaintsApi = {
     api.put<Complaint>(`/api/admin/complaints/${id}/approve`).then((r) => r.data),
   reject: (id: string) =>
     api.put<Complaint>(`/api/admin/complaints/${id}/reject`).then((r) => r.data),
+  updateStatus: (id: string, status: string) =>
+    api.patch<Complaint>(`/api/complaints/${id}/status`, { status }).then((r) => r.data),
+  updateRespondent: (id: string, respondentInfo: Partial<PersonInfo>) =>
+    api.patch<Complaint>(`/api/complaints/${id}/respondent`, respondentInfo).then((r) => r.data),
 };
 
 export const hearingsApi = {
   getScheduled: () =>
     api.get<Hearing[]>("/api/hearings/scheduled").then((r) => r.data),
-  create: (data: {
+  getByComplaint: (complaintId: string) =>
+    api.get<Hearing[]>(`/api/hearings/complaint/${complaintId}`).then((r) => r.data),
+  save: (data: {
     complaintId: string;
     hearingNumber?: number;
     hearingDate?: string;
     hearingTime?: string;
+    timeConsumed?: string;
+    assignedMediator?: string;
     venue?: string;
     witnesses?: string[];
+    decision?: string;
     mediationNotes?: string;
-    outcome: "resolved" | "scheduled" | "forwarded";
+    complaintStatus?: string;
+    status?: string;
   }) => api.post<Hearing>("/api/hearings", data).then((r) => r.data),
 };
 
@@ -92,6 +115,8 @@ export const summonsApi = {
     officer: string;
     summonNo?: string;
   }) => api.post<Summon>("/api/summons", data).then((r) => r.data),
+  getByComplaint: (complaintId: string) =>
+    api.get<Summon>(`/api/summons/complaint/${complaintId}`).then((r) => r.data),
   notify: (complaintId: string) =>
     api.post(`/api/summons/${complaintId}/notify`).then((r) => r.data),
 };

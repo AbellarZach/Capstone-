@@ -14,7 +14,7 @@ import type { MonthlyAnalytics } from "@/lib/types";
 
 export function MonthlyChart({ data }: { data: MonthlyAnalytics[] }) {
   return (
-    <ResponsiveContainer width="100%" height={300} >
+    <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#9ca3af" />
@@ -31,17 +31,25 @@ export function MonthlyChart({ data }: { data: MonthlyAnalytics[] }) {
           type="monotone"
           dataKey="complaints"
           name="Complaints"
-          stroke="#0575FF"
+          stroke="#0066ff"
           strokeWidth={2}
-          dot={{ fill: "#0575FF", r: 4 }}
+          dot={{ fill: "#0066ff", r: 4 }}
         />
         <Line
           type="monotone"
-          dataKey="resolved"
-          name="Resolved"
-          stroke="#22c55e"
+          dataKey="pending"
+          name="Pending"
+          stroke="#f59e0b"
           strokeWidth={2}
-          dot={{ fill: "#22c55e", r: 4 }}
+          dot={{ fill: "#f59e0b", r: 3 }}
+        />
+        <Line
+          type="monotone"
+          dataKey="inProgress"
+          name="In Progress"
+          stroke="#3b82f6"
+          strokeWidth={2}
+          dot={{ fill: "#3b82f6", r: 3 }}
         />
         <Line
           type="monotone"
@@ -49,9 +57,32 @@ export function MonthlyChart({ data }: { data: MonthlyAnalytics[] }) {
           name="Scheduled"
           stroke="#a855f7"
           strokeWidth={2}
-          dot={{ fill: "#a855f7", r: 4 }}
+          dot={{ fill: "#a855f7", r: 3 }}
         />
-
+        <Line
+          type="monotone"
+          dataKey="resolved"
+          name="Resolved"
+          stroke="#22c55e"
+          strokeWidth={2}
+          dot={{ fill: "#22c55e", r: 3 }}
+        />
+        <Line
+          type="monotone"
+          dataKey="cancelled"
+          name="Cancelled"
+          stroke="#ef4444"
+          strokeWidth={2}
+          dot={{ fill: "#ef4444", r: 3 }}
+        />
+        <Line
+          type="monotone"
+          dataKey="unsettled"
+          name="Unsettled"
+          stroke="#dc2626"
+          strokeWidth={2}
+          dot={{ fill: "#dc2626", r: 3 }}
+        />
       </LineChart>
     </ResponsiveContainer>
   );

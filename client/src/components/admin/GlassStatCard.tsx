@@ -27,20 +27,18 @@ export function GlassStatCard({
   label,
   value,
   icon,
-  variant = "blue",
 }: GlassStatCardProps) {
   return (
     <div
-      className={`glass-card admin-card p-4 bg-gradient-to-br  ${variants[variant]}`}
+      className="admin-card p-4 rounded-xl shadow-sm text-white transition-all duration-200 hover:shadow-md"
+      style={{ backgroundColor: "#628141" }}
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-medium text-gray-500">{label}</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+          <p className="text-xs font-medium text-white/90">{label}</p>
+          <p className="mt-1 text-2xl font-bold text-white">{value}</p>
         </div>
-        <div
-          className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconColors[variant]}`}
-        >
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 text-white">
           <MaterialIcon name={icon} className="text-xl" />
         </div>
       </div>

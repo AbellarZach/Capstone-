@@ -60,7 +60,13 @@ export function MonthlyBarChart({ data }: { data: MonthlyAnalytics[] }) {
             border: "1px solid #e5e7eb",
           }}
         />
-        <Bar dataKey="complaints" name="Complaints" fill="#0575FF" radius={[6, 6, 0, 0]} />
+        <Legend />
+        <Bar dataKey="pending" name="Pending" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="inProgress" name="In Progress" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="scheduled" name="Scheduled" fill="#a855f7" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="resolved" name="Resolved" fill="#22c55e" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="cancelled" name="Cancelled" fill="#ef4444" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="unsettled" name="Unsettled" fill="#dc2626" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -80,8 +86,9 @@ export function ResolutionLineChart({ data }: { data: MonthlyAnalytics[] }) {
           }}
         />
         <Legend />
+        <Bar dataKey="complaints" name="Total Filed" fill="#0066ff" radius={[6, 6, 0, 0]} />
         <Bar dataKey="resolved" name="Resolved" fill="#22c55e" radius={[6, 6, 0, 0]} />
-        <Bar dataKey="complaints" name="Filed" fill="#0575FF" radius={[6, 6, 0, 0]} />
+        <Bar dataKey="unsettled" name="Unsettled" fill="#dc2626" radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

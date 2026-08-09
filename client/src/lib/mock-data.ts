@@ -23,12 +23,12 @@ export const statusOverview = [
 ];
 
 export const monthlyAnalytics: MonthlyAnalytics[] = [
-  { month: "Jan", complaints: 28, resolved: 22, scheduled: 5 },
-  { month: "Feb", complaints: 35, resolved: 30, scheduled: 4 },
-  { month: "Mar", complaints: 42, resolved: 38, scheduled: 6 },
-  { month: "Apr", complaints: 38, resolved: 35, scheduled: 7 },
-  { month: "May", complaints: 45, resolved: 40, scheduled: 8 },
-  { month: "Jun", complaints: 52, resolved: 48, scheduled: 9 },
+  { month: "Jan", complaints: 28, pending: 5, inProgress: 4, scheduled: 3, resolved: 14, cancelled: 1, unsettled: 1 },
+  { month: "Feb", complaints: 35, pending: 6, inProgress: 5, scheduled: 4, resolved: 17, cancelled: 2, unsettled: 1 },
+  { month: "Mar", complaints: 42, pending: 8, inProgress: 6, scheduled: 5, resolved: 20, cancelled: 2, unsettled: 1 },
+  { month: "Apr", complaints: 38, pending: 7, inProgress: 5, scheduled: 4, resolved: 19, cancelled: 2, unsettled: 1 },
+  { month: "May", complaints: 45, pending: 9, inProgress: 7, scheduled: 6, resolved: 20, cancelled: 2, unsettled: 1 },
+  { month: "Jun", complaints: 52, pending: 10, inProgress: 8, scheduled: 7, resolved: 23, cancelled: 3, unsettled: 1 },
 ];
 
 export const complaints: Complaint[] = [

@@ -3,8 +3,18 @@ const pool = require("../database/db");
 
 async function getAll(req, res) {
   try {
-    const complaints = await complaintModel.findAll();
+    const { search, status, priority, category } = req.query;
+    const complaints = await complaintModel.findAll({ search, status, priority, category });
     res.json(complaints);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+async function getCategories(req, res) {
+  try {
+    const categories = await complaintModel.getCategories();
+    res.json(categories);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -23,6 +33,34 @@ async function getRecent(req, res) {
 async function getById(req, res) {
   try {
     const complaint = await complaintModel.findById(req.params.id);
+    if (!complaint) return res.status(404).json({ message: "Complaint not found" });
+    res.json(complaint);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+async function updateStatus(req, res) {
+  try {
+    const { status } = req.body;
+    if (!status) return res.status(400).json({ message: "Status is required" });
+    const complaint = await complaintModel.updateStatus(req.params.id, status);
+    if (!complaint) return res.status(404).json({ message: "Complaint not found" });
+
+    await pool.query(
+      "INSERT INTO activity_logs (action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4)",
+      ["update_complaint_status", "complaint", req.params.id, JSON.stringify({ status })]
+    );
+
+    res.json(complaint);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+async function updateRespondent(req, res) {
+  try {
+    const complaint = await complaintModel.updateRespondent(req.params.id, req.body);
     if (!complaint) return res.status(404).json({ message: "Complaint not found" });
     res.json(complaint);
   } catch (err) {
@@ -89,4 +127,14 @@ async function reject(req, res) {
   }
 }
 
-module.exports = { getAll, getRecent, getById, getDashboard, approve, reject };
+module.exports = {
+  getAll,
+  getCategories,
+  getRecent,
+  getById,
+  updateStatus,
+  updateRespondent,
+  getDashboard,
+  approve,
+  reject,
+};

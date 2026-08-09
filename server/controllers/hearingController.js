@@ -20,53 +20,58 @@ async function getByComplaint(req, res) {
   }
 }
 
-async function create(req, res) {
+async function saveHearing(req, res) {
   try {
-    const { complaintId, hearingNumber, hearingDate, hearingTime, venue, witnesses, mediationNotes, outcome } = req.body;
-
-    const previousNotes = await hearingModel.getPreviousNotes(complaintId);
-    const nextNumber = hearingNumber || (await hearingModel.getNextHearingNumber(complaintId));
-
-    const hearing = await hearingModel.create({
+    const {
       complaintId,
-      hearingNumber: nextNumber,
+      hearingNumber,
       hearingDate,
       hearingTime,
+      timeConsumed,
+      assignedMediator,
       venue,
-      witnesses: witnesses?.filter(Boolean) ?? [],
+      witnesses,
+      decision,
+      mediationNotes,
+      complaintStatus,
+      status,
+    } = req.body;
+
+    if (!complaintId) {
+      return res.status(400).json({ message: "complaintId is required" });
+    }
+
+    const previousNotes = await hearingModel.getPreviousNotes(complaintId);
+    const hearingNum = Number(hearingNumber) || (await hearingModel.getNextHearingNumber(complaintId));
+
+    const hearing = await hearingModel.upsertHearing({
+      complaintId,
+      hearingNumber: hearingNum,
+      hearingDate,
+      hearingTime,
+      timeConsumed,
+      assignedMediator,
+      venue,
+      witnesses: Array.isArray(witnesses) ? witnesses.filter(Boolean) : [],
+      decision,
       mediationNotes,
       previousNotes,
-      status: outcome === "scheduled" ? "Scheduled" : "Completed",
+      status: status || "Scheduled",
     });
 
-    let newStatus;
-    if (outcome === "resolved") newStatus = "Resolved";
-    else if (outcome === "forwarded") newStatus = "Unsettled";
-    else if (outcome === "scheduled") newStatus = "Scheduled";
-    else newStatus = "In Progress";
-
-    await complaintModel.updateStatus(complaintId, newStatus);
-
-    if (outcome === "scheduled" && hearingDate) {
-      await hearingModel.create({
-        complaintId,
-        hearingNumber: nextNumber + 1,
-        hearingDate,
-        hearingTime,
-        venue,
-        status: "Scheduled",
-      });
+    if (complaintStatus) {
+      await complaintModel.updateStatus(complaintId, complaintStatus);
     }
 
     await pool.query(
       "INSERT INTO activity_logs (action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4)",
-      ["create_hearing", "hearing", hearing.id, JSON.stringify({ outcome, complaintId })]
+      ["save_hearing", "hearing", hearing.id, JSON.stringify({ complaintId, hearingNumber: hearingNum })]
     );
 
-    res.status(201).json(hearing);
+    res.status(200).json(hearing);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 }
 
-module.exports = { getScheduled, getByComplaint, create };
+module.exports = { getScheduled, getByComplaint, create: saveHearing, saveHearing };
