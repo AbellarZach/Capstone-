@@ -180,6 +180,15 @@ export default function PendingComplaintPage({
       <div className="flex flex-wrap items-center justify-end gap-3 pt-3">
         <button
           type="button"
+          onClick={() => router.push("/admin/complaints")}
+          disabled={actionLoading}
+          className="btn btn-secondary btn-lg min-w-[120px]"
+        >
+          <MaterialIcon name="arrow_back" className="text-lg" />
+          BACK
+        </button>
+        <button
+          type="button"
           onClick={handleCancel}
           disabled={actionLoading}
           className="btn btn-danger btn-lg min-w-[140px]"

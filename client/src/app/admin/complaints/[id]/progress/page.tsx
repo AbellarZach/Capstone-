@@ -13,15 +13,18 @@ import { MaterialIcon } from "@/components/admin/MaterialIcon";
 export default function ComplaintProgressPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; stage?: string }>;
 }) {
-  const { id } = use(params);
+  const resolvedParams = use(params);
+  const id = resolvedParams.id;
+  const rawStage = resolvedParams.stage;
+
   const router = useRouter();
 
   const [complaint, setComplaint] = useState<Complaint | null>(null);
   const [hearings, setHearings] = useState<Hearing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [savingRespondent, setSavingRespondent] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Editable Respondent Form State
   const [respondentName, setRespondentName] = useState("");
@@ -29,93 +32,126 @@ export default function ComplaintProgressPage({
   const [respondentContact, setRespondentContact] = useState("");
   const [respondentEmail, setRespondentEmail] = useState("");
 
-  // Witnesses State
-  const [witnesses, setWitnesses] = useState<{ name: string; address: string }[]>([]);
-  const [newWitnessName, setNewWitnessName] = useState("");
-  const [newWitnessAddress, setNewWitnessAddress] = useState("");
+  // Editable Witness State
+  const [witnessName, setWitnessName] = useState("");
+  const [witnessAddress, setWitnessAddress] = useState("");
 
-  // Hearing Schedule Modal/Inputs for Schedule Hearing
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  // Editable Hearing Details State
   const [hearingDate, setHearingDate] = useState("");
   const [hearingTime, setHearingTime] = useState("");
-  const [assignedMediator, setAssignedMediator] = useState("");
   const [timeConsumed, setTimeConsumed] = useState("");
+  const [assignedMediator, setAssignedMediator] = useState("");
+  const [decision, setDecision] = useState("");
+  const [mediationNotes, setMediationNotes] = useState("");
   const [venue, setVenue] = useState("Barangay Hall Session Room");
-  const [actionLoading, setActionLoading] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
       const cData = await complaintsApi.getById(id);
       setComplaint(cData);
-      setRespondentName(cData.respondentInfo.name || cData.respondent || "");
-      setRespondentAddress(cData.respondentInfo.address || "");
-      setRespondentContact(cData.respondentInfo.contact || "");
-      setRespondentEmail(cData.respondentInfo.email || "");
+
+      setRespondentName(cData.respondentInfo?.name || cData.respondent || "");
+      setRespondentAddress(cData.respondentInfo?.address || "");
+      setRespondentContact(cData.respondentInfo?.contact || "");
+      setRespondentEmail(cData.respondentInfo?.email || "");
 
       const hData = await hearingsApi.getByComplaint(id);
       setHearings(hData);
 
-      // Extract existing witnesses if any
-      const existingWit = hData.flatMap((h) => h.witnesses || []);
-      const parsedWit = existingWit.map((w) => {
-        if (typeof w === "string") {
-          return { name: w, address: "" };
+      const latestHearingNum = cData.latestHearingNumber || hData.length || 1;
+      const targetStage = Math.max(1, Math.min(4, rawStage ? Number(rawStage) : latestHearingNum));
+
+      const found = hData.find((h) => h.hearingNumber === targetStage);
+      if (found) {
+        if (found.date) setHearingDate(found.date);
+        if (found.time) setHearingTime(found.time);
+        if (found.timeConsumed) setTimeConsumed(found.timeConsumed);
+        if (found.assignedMediator) setAssignedMediator(found.assignedMediator);
+        if (found.decision) setDecision(found.decision);
+        if (found.mediationNotes) setMediationNotes(found.mediationNotes);
+        if (found.venue) setVenue(found.venue);
+
+        if (found.witnesses && found.witnesses.length > 0) {
+          const wit = found.witnesses[0];
+          if (typeof wit === "string") {
+            setWitnessName(wit);
+          } else if (typeof wit === "object" && wit) {
+            setWitnessName((wit as { name?: string }).name || "");
+            setWitnessAddress((wit as { address?: string }).address || "");
+          }
         }
-        return w as any;
-      });
-      if (parsedWit.length > 0) setWitnesses(parsedWit);
+      } else {
+        if (cData.hearingDate) setHearingDate(cData.hearingDate);
+        if (cData.hearingTime) setHearingTime(cData.hearingTime);
+        if (!assignedMediator) setAssignedMediator("Cap. Nicolas C. Antipuesto");
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, rawStage, assignedMediator]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const handleSaveRespondent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!respondentName.trim()) {
-      alert("Respondent Name is required.");
-      return;
-    }
-    setSavingRespondent(true);
-    try {
+  const latestHearingNum = complaint?.latestHearingNumber || hearings.length || 1;
+  const stageNumber = Math.max(1, Math.min(4, rawStage ? Number(rawStage) : latestHearingNum));
+
+  const saveFormDetails = async (desiredComplaintStatus: string) => {
+    // Save respondent updates
+    if (respondentName.trim()) {
       await complaintsApi.updateRespondent(id, {
-        name: respondentName,
-        address: respondentAddress,
-        contact: respondentContact,
-        email: respondentEmail,
+        name: respondentName.trim(),
+        address: respondentAddress.trim(),
+        contact: respondentContact.trim(),
+        email: respondentEmail.trim(),
       });
-      alert("Respondent Information saved successfully.");
-      await loadData();
+    }
+
+    // Prepare witness payload
+    const witnessPayload = witnessName.trim()
+      ? [{ name: witnessName.trim(), address: witnessAddress.trim() }]
+      : [];
+
+    // Save hearing updates
+    await hearingsApi.save({
+      complaintId: id,
+      hearingNumber: stageNumber,
+      hearingDate: hearingDate || new Date().toISOString().slice(0, 10),
+      hearingTime: hearingTime || "09:00 AM",
+      timeConsumed: timeConsumed.trim(),
+      assignedMediator: assignedMediator.trim(),
+      venue: venue.trim(),
+      witnesses: witnessPayload as any,
+      decision: decision.trim(),
+      mediationNotes: mediationNotes.trim(),
+      complaintStatus: desiredComplaintStatus,
+      status: desiredComplaintStatus === "Scheduled" ? "Scheduled" : "Conducted",
+    });
+  };
+
+  const handleScheduleHearing = async () => {
+    if (stageNumber >= 4) return;
+    setActionLoading(true);
+    try {
+      await saveFormDetails("Scheduled");
+      router.push("/admin/complaints");
     } catch (err) {
       console.error(err);
-      alert("Failed to save respondent information.");
+      alert("Failed to save and schedule hearing.");
     } finally {
-      setSavingRespondent(false);
+      setActionLoading(false);
     }
-  };
-
-  const handleAddWitness = () => {
-    if (!newWitnessName.trim()) return;
-    setWitnesses((prev) => [...prev, { name: newWitnessName.trim(), address: newWitnessAddress.trim() }]);
-    setNewWitnessName("");
-    setNewWitnessAddress("");
-  };
-
-  const handleRemoveWitness = (index: number) => {
-    setWitnesses((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleResolve = async () => {
     if (!confirm("Are you sure you want to mark this complaint as RESOLVED?")) return;
     setActionLoading(true);
     try {
-      await complaintsApi.updateStatus(id, "Resolved");
-      router.push("/admin/complaints");
+      await saveFormDetails("Resolved");
+      router.push(`/admin/complaints/${id}/resolve/${stageNumber}`);
     } catch (err) {
       console.error(err);
       alert("Failed to resolve complaint.");
@@ -124,33 +160,15 @@ export default function ComplaintProgressPage({
     }
   };
 
-  const handleConfirmScheduleHearing = async () => {
-    if (!hearingDate || !hearingTime) {
-      alert("Hearing Date and Hearing Time are required to schedule a hearing.");
-      return;
-    }
-
-    const nextHearingNo = (hearings.length || 0) + 1;
+  const handleUnsettled = async () => {
+    if (!confirm("Are you sure you want to mark this complaint as UNSETTLED?")) return;
     setActionLoading(true);
     try {
-      await hearingsApi.save({
-        complaintId: id,
-        hearingNumber: nextHearingNo,
-        hearingDate,
-        hearingTime,
-        timeConsumed,
-        assignedMediator,
-        venue,
-        witnesses: witnesses.map((w) => `${w.name}${w.address ? ` (${w.address})` : ""}`),
-        complaintStatus: "Scheduled",
-        status: "Scheduled",
-      });
-
-      setShowScheduleModal(false);
+      await saveFormDetails("Unsettled");
       router.push("/admin/complaints");
     } catch (err) {
       console.error(err);
-      alert("Failed to schedule hearing.");
+      alert("Failed to set complaint to unsettled.");
     } finally {
       setActionLoading(false);
     }
@@ -158,8 +176,8 @@ export default function ComplaintProgressPage({
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-gray-500">
-        Loading case history...
+      <div className="flex h-64 items-center justify-center text-gray-500 text-sm">
+        Loading progress form...
       </div>
     );
   }
@@ -175,418 +193,330 @@ export default function ComplaintProgressPage({
     );
   }
 
-  const latestHearingNum = complaint.latestHearingNumber || hearings.length || 0;
-  const isUnsettled = complaint.status === "Unsettled";
+  const previousHearings = hearings.filter((h) => h.hearingNumber < stageNumber);
+
+  // Complainant Display info
+  const complainantName = complaint.complainantInfo?.name || complaint.complainant || "N/A";
+  const complainantEmail = complaint.complainantInfo?.email || "N/A";
+  const complainantContact = complaint.complainantInfo?.contact || "N/A";
+  const complainantAddress = complaint.complainantInfo?.address || "N/A";
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
-        title={`CASE PROGRESS — Complaint #${complaint.complaintNo}`}
+        title={`Progress ${stageNumber} — Complaint #${complaint.complaintNo}`}
         action={
-          <Link
-            href="/admin/complaints"
+          <button
+            type="button"
+            onClick={() => router.push("/admin/complaints")}
             className="text-sm font-medium text-primary hover:text-primary-dark"
           >
             ← Back to Complaints
-          </Link>
+          </button>
         }
       />
 
-      {/* Case Overview Card */}
-      <div className="admin-card p-5">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+      {/* Overview Header */}
+      <div className="admin-card p-5 space-y-3">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
-            Complaint Information
+            Complaint Overview
           </h3>
-          <StatusBadge status={complaint.status} hearingNumber={latestHearingNum} />
+          <StatusBadge status={complaint.status} hearingNumber={stageNumber} />
         </div>
-
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <InfoItem label="Complaint #" value={complaint.complaintNo} />
-          <InfoItem label="Date Filed" value={complaint.dateFiled} />
-          <InfoItem label="Category" value={complaint.category} />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 text-sm">
+          <div>
+            <p className="text-xs text-gray-500 font-medium">Complaint #</p>
+            <p className="font-bold text-primary">{complaint.complaintNo}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium">Date Filed</p>
+            <p className="font-semibold text-gray-800">{complaint.dateFiled}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium">Category</p>
+            <p className="font-semibold text-gray-800">{complaint.category}</p>
+          </div>
           <div>
             <p className="text-xs text-gray-500 font-medium">Priority</p>
-            <div className="mt-1">
+            <div className="mt-0.5">
               <PriorityBadge priority={complaint.priority} />
             </div>
           </div>
         </div>
-
-        <div className="mt-4 pt-3 border-t border-gray-100">
-          <p className="text-xs font-medium text-gray-500 mb-1">Description</p>
-          <p className="text-sm text-gray-800 bg-gray-50 p-3 rounded-lg border border-gray-100">
-            {complaint.description || "No description available."}
-          </p>
-        </div>
-
-        {complaint.evidence && complaint.evidence.length > 0 && (
-          <div className="mt-3">
-            <p className="text-xs font-medium text-gray-500 mb-1">Evidence Submitted</p>
-            <div className="flex flex-wrap gap-2">
-              {complaint.evidence.map((ev, i) => (
-                <span key={i} className="inline-flex items-center gap-1 text-xs bg-gray-100 px-2.5 py-1 rounded text-gray-700">
-                  <MaterialIcon name="attach_file" className="text-sm text-primary" />
-                  {ev}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Complainant & Editable Respondent Information */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {/* Complainant Card */}
+      {/* Previous Hearing Records (READ ONLY) */}
+      {previousHearings.length > 0 && (
         <div className="admin-card p-5 space-y-3">
-          <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-700 pb-2 border-b border-gray-100">
-            <MaterialIcon name="person" className="text-primary text-xl" />
-            Complainant Information
+          <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-700 pb-2 border-b border-gray-100">
+            <MaterialIcon name="history" className="text-primary text-lg" />
+            Previous Hearing Records [READ ONLY]
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <InfoItem label="Full Name" value={complaint.complainantInfo.name || complaint.complainant} />
-            <InfoItem label="Age" value={complaint.complainantInfo.age ? `${complaint.complainantInfo.age} yrs` : "N/A"} />
-            <InfoItem label="Address" value={complaint.complainantInfo.address || "N/A"} />
-            <InfoItem label="Mobile Number" value={complaint.complainantInfo.contact || "N/A"} />
-            <InfoItem label="Email / Gmail" value={complaint.complainantInfo.email || "N/A"} />
-          </div>
-        </div>
-
-        {/* Editable Respondent Card */}
-        <form onSubmit={handleSaveRespondent} className="admin-card p-5 space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-            <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
-              <MaterialIcon name="edit" className="text-primary text-xl" />
-              Respondent Information (Editable)
-            </h3>
-            <button
-              type="submit"
-              disabled={savingRespondent}
-              className="btn btn-primary btn-sm"
-            >
-              {savingRespondent ? "Saving..." : "Save Info"}
-            </button>
-          </div>
-
-          <div className="space-y-3 text-sm">
-            <div>
-              <label className="block text-xs font-medium text-gray-500">Full Name *</label>
-              <input
-                type="text"
-                value={respondentName}
-                onChange={(e) => setRespondentName(e.target.value)}
-                required
-                className="w-full mt-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500">Complete Address</label>
-              <input
-                type="text"
-                value={respondentAddress}
-                onChange={(e) => setRespondentAddress(e.target.value)}
-                className="w-full mt-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs font-medium text-gray-500">Mobile Number</label>
-                <input
-                  type="text"
-                  value={respondentContact}
-                  onChange={(e) => setRespondentContact(e.target.value)}
-                  className="w-full mt-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500">Gmail / Email</label>
-                <input
-                  type="email"
-                  value={respondentEmail}
-                  onChange={(e) => setRespondentEmail(e.target.value)}
-                  className="w-full mt-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      {/* Witnesses Section */}
-      <div className="admin-card p-5 space-y-3">
-        <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-700 pb-2 border-b border-gray-100">
-          <MaterialIcon name="groups" className="text-primary text-xl" />
-          Witnesses Section (Optional)
-        </h3>
-
-        {/* Existing Witness List */}
-        {witnesses.length > 0 ? (
-          <div className="space-y-2">
-            {witnesses.map((w, idx) => (
-              <div key={idx} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 text-sm">
-                <div>
-                  <strong className="text-gray-900">{w.name}</strong>
-                  {w.address && <span className="text-gray-500 text-xs ml-2">({w.address})</span>}
+          <div className="space-y-3">
+            {previousHearings.map((ph) => (
+              <div key={ph.id} className="bg-gray-50 p-3.5 rounded-lg border border-gray-200 text-xs space-y-1.5">
+                <div className="flex items-center justify-between font-bold text-gray-900">
+                  <span>HEARING #{ph.hearingNumber} RECORD [READ ONLY]</span>
+                  <span className="text-gray-500">{ph.date} {ph.time}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveWitness(idx)}
-                  className="text-red-600 hover:text-red-800 text-xs font-medium"
-                >
-                  Remove
-                </button>
+                <div className="grid grid-cols-2 gap-2 text-gray-700">
+                  <p><strong>Mediator:</strong> {ph.assignedMediator || "N/A"}</p>
+                  <p><strong>Duration:</strong> {ph.timeConsumed || "N/A"}</p>
+                </div>
+                {ph.decision && <p className="text-gray-800"><strong>Decision:</strong> {ph.decision}</p>}
+                {ph.mediationNotes && <p className="text-gray-800"><strong>Notes:</strong> {ph.mediationNotes}</p>}
               </div>
             ))}
           </div>
-        ) : (
-          <p className="text-xs text-gray-500 italic">No witnesses added yet.</p>
-        )}
-
-        {/* Add Witness Inputs */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-gray-100">
-          <input
-            type="text"
-            placeholder="Witness Full Name"
-            value={newWitnessName}
-            onChange={(e) => setNewWitnessName(e.target.value)}
-            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-          <input
-            type="text"
-            placeholder="Witness Address (Optional)"
-            value={newWitnessAddress}
-            onChange={(e) => setNewWitnessAddress(e.target.value)}
-            className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-          <button
-            type="button"
-            onClick={handleAddWitness}
-            className="btn btn-secondary btn-sm"
-          >
-            + Add Witness
-          </button>
-        </div>
-      </div>
-
-      {/* Historical Hearings List */}
-      <div className="admin-card p-5 space-y-4">
-        <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-700 pb-2 border-b border-gray-100">
-          <MaterialIcon name="history" className="text-primary text-xl" />
-          Hearing History
-        </h3>
-
-        {hearings.length > 0 ? (
-          <div className="space-y-4">
-            {hearings.map((h) => (
-              <div key={h.id} className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 space-y-3">
-                <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-                  <h4 className="font-bold text-gray-900 text-sm">
-                    {h.hearingNumber === 1 && "FIRST HEARING"}
-                    {h.hearingNumber === 2 && "SECOND HEARING"}
-                    {h.hearingNumber === 3 && "THIRD HEARING"}
-                    {h.hearingNumber === 4 && "FOURTH HEARING"}
-                    {h.hearingNumber > 4 && `HEARING #${h.hearingNumber}`}
-                  </h4>
-                  <StatusBadge status="Scheduled" hearingNumber={h.hearingNumber} />
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div>
-                    <span className="text-gray-500 font-medium">Hearing Date:</span>
-                    <p className="font-semibold text-gray-800">{h.date || "N/A"}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 font-medium">Hearing Time:</span>
-                    <p className="font-semibold text-gray-800">{h.time || "N/A"}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 font-medium">Time Consumed:</span>
-                    <p className="font-semibold text-gray-800">{h.timeConsumed || "N/A"}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 font-medium">Assigned Mediator:</span>
-                    <p className="font-semibold text-gray-800">{h.assignedMediator || "N/A"}</p>
-                  </div>
-                </div>
-
-                {h.decision && (
-                  <div className="text-xs">
-                    <span className="text-gray-500 font-medium">Decision:</span>
-                    <p className="font-medium text-gray-900 bg-white p-2 rounded border border-gray-200 mt-0.5">
-                      {h.decision}
-                    </p>
-                  </div>
-                )}
-
-                {h.mediationNotes && (
-                  <div className="text-xs">
-                    <span className="text-gray-500 font-medium">Message / Notes:</span>
-                    <p className="text-gray-700 bg-white p-2 rounded border border-gray-200 mt-0.5">
-                      {h.mediationNotes}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500 italic">No hearing records scheduled or conducted yet.</p>
-        )}
-      </div>
-
-      {/* Prominent Unsettled Notice */}
-      {isUnsettled && (
-        <div className="rounded-xl border-2 border-slate-900 bg-slate-900 p-6 text-center text-white space-y-2 shadow-lg">
-          <MaterialIcon name="gavel" className="text-4xl text-amber-400 block mx-auto" />
-          <h3 className="text-lg font-black uppercase tracking-wider text-amber-400">
-            CASE UNSETTLED
-          </h3>
-          <p className="text-base font-extrabold uppercase tracking-widest text-slate-100">
-            &quot;FOR FURTHER SETTLEMENT WILL PROCEED TO TRIAL COURT.&quot;
-          </p>
         </div>
       )}
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap items-center justify-end gap-3 pt-3">
-        <button
-          type="button"
-          onClick={() => router.push("/admin/complaints")}
-          className="btn btn-secondary btn-lg min-w-[120px]"
-        >
-          <MaterialIcon name="arrow_back" />
-          BACK
-        </button>
+      {/* Main Interactive Form with Exact Styling of Reference Image */}
+      <div className="admin-card p-6 md:p-8 bg-white space-y-6 border border-gray-200 shadow-sm rounded-2xl">
+        {/* Section 1: Complainant Information */}
+        <div className="space-y-3">
+          <h3 className="text-base font-bold text-gray-900">Complainant Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-xs text-gray-400 font-medium">Full Name</p>
+              <p className="font-bold text-gray-900 mt-0.5">{complainantName}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium">Email Address</p>
+              <p className="font-bold text-gray-900 mt-0.5">{complainantEmail}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium">Mobile Number</p>
+              <p className="font-bold text-gray-900 mt-0.5">{complainantContact}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium">Complete Address</p>
+              <p className="font-bold text-gray-900 mt-0.5">{complainantAddress}</p>
+            </div>
+          </div>
+        </div>
 
-        {!isUnsettled && complaint.status !== "Resolved" && complaint.status !== "Cancelled" && (
-          <>
-            <button
-              type="button"
-              onClick={handleResolve}
-              disabled={actionLoading}
-              className="btn btn-success btn-lg min-w-[140px]"
-            >
-              <MaterialIcon name="check_circle" />
-              RESOLVED
-            </button>
+        {/* Section 2: Respondent Information (Inputable) */}
+        <div className="space-y-3 pt-2">
+          <h3 className="text-base font-bold text-gray-900">Respondent Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <label className="block text-xs text-gray-400 font-medium mb-1">Full Name</label>
+              <input
+                type="text"
+                placeholder="Enter Respondent Full Name"
+                value={respondentName}
+                onChange={(e) => setRespondentName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 font-medium mb-1">Complete Address</label>
+              <input
+                type="text"
+                placeholder="Enter Complete Address"
+                value={respondentAddress}
+                onChange={(e) => setRespondentAddress(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 font-medium mb-1">Mobile Number</label>
+              <input
+                type="text"
+                placeholder="Enter Mobile Number"
+                value={respondentContact}
+                onChange={(e) => setRespondentContact(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 font-medium mb-1">Email Address</label>
+              <input
+                type="email"
+                placeholder="Enter Email Address"
+                value={respondentEmail}
+                onChange={(e) => setRespondentEmail(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
+              />
+            </div>
+          </div>
+        </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (latestHearingNum > 0) {
-                  // Direct to next stage hearing page or next summon
-                  router.push(`/admin/complaints/${id}/hearing/${latestHearingNum}`);
-                } else {
-                  setShowScheduleModal(true);
-                }
-              }}
-              disabled={actionLoading}
-              className="btn btn-primary btn-lg min-w-[180px]"
-            >
-              <MaterialIcon name="event" />
-              {latestHearingNum === 0 && "SCHEDULE HEARING"}
-              {latestHearingNum === 1 && "GO TO FIRST HEARING"}
-              {latestHearingNum === 2 && "GO TO SECOND HEARING"}
-              {latestHearingNum === 3 && "GO TO THIRD HEARING"}
-              {latestHearingNum === 4 && "GO TO FOURTH HEARING"}
-              {latestHearingNum > 4 && `GO TO HEARING #${latestHearingNum}`}
-            </button>
-          </>
-        )}
-      </div>
+        {/* Section 3: Witness (Inputable) */}
+        <div className="space-y-3 pt-2">
+          <h3 className="text-base font-bold text-gray-900">Witness</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <label className="block text-xs text-gray-400 font-medium mb-1">Full Name</label>
+              <input
+                type="text"
+                placeholder="Enter Witness Full Name"
+                value={witnessName}
+                onChange={(e) => setWitnessName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 font-medium mb-1">Complete Address</label>
+              <input
+                type="text"
+                placeholder="Enter Witness Address"
+                value={witnessAddress}
+                onChange={(e) => setWitnessAddress(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
+              />
+            </div>
+          </div>
+        </div>
 
-      {/* Modal for Scheduling First Hearing */}
-      {showScheduleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 space-y-4 shadow-xl">
-            <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">
-              Schedule 1st Hearing
-            </h3>
-
-            <div className="space-y-3 text-sm">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600">Hearing Date *</label>
+        {/* Section 4: Hearing Schedule & Decision Details (Inputable) */}
+        <div className="space-y-4 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <label className="block text-base font-bold text-gray-900 mb-1">Hearing Date</label>
+              <div className="relative">
                 <input
                   type="date"
                   value={hearingDate}
                   onChange={(e) => setHearingDate(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-full bg-white font-medium text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm"
                 />
               </div>
+            </div>
+            <div className="hidden md:block" />
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-600">Hearing Time *</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 09:00 AM"
-                  value={hearingTime}
-                  onChange={(e) => setHearingTime(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
+            <div>
+              <label className="block text-base font-bold text-gray-900 mb-1">Hearing Time</label>
+              <input
+                type="text"
+                placeholder="e.g. 1:00 PM"
+                value={hearingTime}
+                onChange={(e) => setHearingTime(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-full bg-white font-medium text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm"
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-600">Time Consumed (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 1 hour 30 mins"
-                  value={timeConsumed}
-                  onChange={(e) => setTimeConsumed(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
+            <div>
+              <label className="block text-base font-bold text-gray-900 mb-1">Time Consumed</label>
+              <input
+                type="text"
+                placeholder="e.g. 1 hour"
+                value={timeConsumed}
+                onChange={(e) => setTimeConsumed(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-full bg-white font-medium text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm"
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-600">Assigned Mediator</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Kagawad Juan Cruz"
+            <div>
+              <label className="block text-base font-bold text-gray-900 mb-1">Assign Mediator</label>
+              <div className="relative">
+                <select
                   value={assignedMediator}
                   onChange={(e) => setAssignedMediator(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-600">Venue</label>
-                <input
-                  type="text"
-                  value={venue}
-                  onChange={(e) => setVenue(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-full bg-white font-medium text-gray-900 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm pr-10"
+                >
+                  <option value="">Select Mediator...</option>
+                  <option value="Lupong Bentong">Lupong Bentong</option>
+                  <option value="Cap. Nicolas C. Antipuesto">Cap. Nicolas C. Antipuesto</option>
+                  <option value="Brgy. Captain / Lupon Officer">Brgy. Captain / Lupon Officer</option>
+                  <option value="Brgy. Kagawad Ramos">Brgy. Kagawad Ramos</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+                  <MaterialIcon name="expand_more" className="text-xl" />
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => setShowScheduleModal(false)}
-                className="btn btn-secondary btn-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmScheduleHearing}
-                disabled={actionLoading}
-                className="btn btn-primary btn-sm"
-              >
-                {actionLoading ? "Scheduling..." : "Schedule & Set Status"}
-              </button>
+            <div>
+              <label className="block text-base font-bold text-gray-900 mb-1">Decision</label>
+              <div className="relative">
+                <select
+                  value={decision}
+                  onChange={(e) => setDecision(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-full bg-white font-medium text-gray-900 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm pr-10"
+                >
+                  <option value="">Select Decision...</option>
+                  <option value="Unsettled">Unsettled</option>
+                  <option value="Settled">Settled</option>
+                  <option value="Resolved">Resolved</option>
+                  <option value="Pending Conciliation">Pending Conciliation</option>
+                  <option value="Re-schedule">Re-schedule</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+                  <MaterialIcon name="expand_more" className="text-xl" />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
-function InfoItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs text-gray-500 font-medium">{label}</p>
-      <p className="mt-0.5 text-sm font-semibold text-gray-900">{value}</p>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Message / Note</label>
+            <textarea
+              rows={3}
+              placeholder='e.g. "Despite multiple hearings, including the fourth session, no resolution has been achieved. The case remains unsettled and is recommended for escalation to the trial court for appropriate legal action."'
+              value={mediationNotes}
+              onChange={(e) => setMediationNotes(e.target.value)}
+              className="w-full p-4 border border-gray-300 rounded-2xl bg-white text-sm text-gray-900 leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            />
+          </div>
+        </div>
+
+        {/* Action Buttons matching Reference Image layout */}
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-4 border-t border-gray-100">
+          {stageNumber < 4 && (
+            <>
+              <button
+                type="button"
+                onClick={handleResolve}
+                disabled={actionLoading}
+                className="px-8 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors min-w-[140px]"
+              >
+                Resolved
+              </button>
+              <button
+                type="button"
+                onClick={handleScheduleHearing}
+                disabled={actionLoading}
+                className="px-8 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors min-w-[180px]"
+              >
+                Schedule Hearing
+              </button>
+            </>
+          )}
+
+          {stageNumber >= 4 && (
+            <>
+              <button
+                type="button"
+                onClick={handleResolve}
+                disabled={actionLoading}
+                className="px-8 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors min-w-[140px]"
+              >
+                Resolved
+              </button>
+              <button
+                type="button"
+                onClick={handleUnsettled}
+                disabled={actionLoading}
+                className="px-8 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors min-w-[140px]"
+              >
+                Unsettled
+              </button>
+            </>
+          )}
+
+          <button
+            type="button"
+            onClick={() => router.push("/admin/complaints")}
+            disabled={actionLoading}
+            className="px-8 py-2.5 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-semibold text-sm transition-colors min-w-[120px]"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

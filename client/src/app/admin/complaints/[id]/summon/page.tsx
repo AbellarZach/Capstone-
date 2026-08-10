@@ -1,9 +1,9 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { complaintsApi, summonsApi } from "@/services/api";
+import { complaintsApi, summonsApi, hearingsApi } from "@/services/api";
 import type { Complaint } from "@/lib/types";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { MaterialIcon } from "@/components/admin/MaterialIcon";
@@ -24,18 +24,29 @@ export default function SummonFormPage({
   const [venue, setVenue] = useState("Barangay Hall Session Hall");
   const [officer, setOfficer] = useState("Brgy. Captain / Lupon Officer");
 
-  useEffect(() => {
-    complaintsApi
-      .getById(id)
-      .then((data) => {
-        setComplaint(data);
-        if (data.hearingDate) setHearingDate(data.hearingDate);
-        if (data.hearingTime) setHearingTime(data.hearingTime);
-        if (data.venue) setVenue(data.venue);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+  const initSummon = useCallback(async () => {
+    try {
+      await hearingsApi.save({
+        complaintId: id,
+        hearingNumber: 1,
+        complaintStatus: "In Progress",
+        status: "In Progress",
+      });
+      const data = await complaintsApi.getById(id);
+      setComplaint(data);
+      if (data.hearingDate) setHearingDate(data.hearingDate);
+      if (data.hearingTime) setHearingTime(data.hearingTime);
+      if (data.venue) setVenue(data.venue);
+    } catch (err) {
+      console.error("Failed to initialize summon 1 stage", err);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    initSummon();
+  }, [initSummon]);
 
   const handlePrint = () => {
     window.print();
@@ -43,10 +54,14 @@ export default function SummonFormPage({
 
   const handleBack = async () => {
     try {
-      // Update status to IN PROGRESS when leaving initial summon page
-      await complaintsApi.updateStatus(id, "In Progress");
+      await hearingsApi.save({
+        complaintId: id,
+        hearingNumber: 1,
+        complaintStatus: "In Progress",
+        status: "In Progress",
+      });
     } catch (err) {
-      console.error("Failed to set status to In Progress", err);
+      console.error("Failed to preserve In Progress 1 status", err);
     }
     router.push("/admin/complaints");
   };

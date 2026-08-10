@@ -61,16 +61,17 @@ export default function ManageComplaintsPage() {
       case "Pending":
         return `/admin/complaints/${c.id}/pending`;
       case "In Progress":
-        return `/admin/complaints/${c.id}/progress`;
+        return `/admin/complaints/${c.id}/progress/${stage}`;
       case "Scheduled":
         return `/admin/complaints/${c.id}/hearing/${stage}`;
       case "Resolved":
+        return `/admin/complaints/${c.id}/resolve/${stage}`;
       case "Unsettled":
-        return `/admin/complaints/${c.id}/progress`;
+        return `/admin/complaints/${c.id}/progress/${stage}`;
       case "Cancelled":
         return `/admin/complaints/${c.id}/pending`;
       default:
-        return `/admin/complaints/${c.id}/progress`;
+        return `/admin/complaints/${c.id}/progress/${stage}`;
     }
   };
 

@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation";
 import { complaintsApi, hearingsApi } from "@/services/api";
 import type { Complaint, Hearing } from "@/lib/types";
 import { PageHeader } from "@/components/admin/PageHeader";
-import { StatusBadge } from "@/components/admin/StatusBadge";
-import { PriorityBadge } from "@/components/admin/PriorityBadge";
 import { MaterialIcon } from "@/components/admin/MaterialIcon";
 
 export default function HearingStagePage({
@@ -18,21 +16,12 @@ export default function HearingStagePage({
   const { id, stage } = use(params);
   const router = useRouter();
 
-  const stageNumber = Math.max(1, Math.min(4, Number(stage) || 1));
+  const stageNumber = Math.max(1, Math.min(3, Number(stage) || 1));
 
   const [complaint, setComplaint] = useState<Complaint | null>(null);
   const [hearings, setHearings] = useState<Hearing[]>([]);
+  const [currentHearing, setCurrentHearing] = useState<Hearing | null>(null);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-
-  // Form Fields for Current Hearing
-  const [hearingDate, setHearingDate] = useState("");
-  const [hearingTime, setHearingTime] = useState("");
-  const [timeConsumed, setTimeConsumed] = useState("");
-  const [assignedMediator, setAssignedMediator] = useState("");
-  const [decision, setDecision] = useState("");
-  const [mediationNotes, setMediationNotes] = useState("");
-  const [venue, setVenue] = useState("Barangay Hall Session Room");
 
   const loadData = useCallback(async () => {
     try {
@@ -42,19 +31,9 @@ export default function HearingStagePage({
       const hData = await hearingsApi.getByComplaint(id);
       setHearings(hData);
 
-      // Find current hearing object if it exists
-      const currentH = hData.find((h) => h.hearingNumber === stageNumber);
-      if (currentH) {
-        if (currentH.date) setHearingDate(currentH.date);
-        if (currentH.time) setHearingTime(currentH.time);
-        if (currentH.timeConsumed) setTimeConsumed(currentH.timeConsumed);
-        if (currentH.assignedMediator) setAssignedMediator(currentH.assignedMediator);
-        if (currentH.decision) setDecision(currentH.decision);
-        if (currentH.mediationNotes) setMediationNotes(currentH.mediationNotes);
-        if (currentH.venue) setVenue(currentH.venue);
-      } else if (cData.hearingDate) {
-        setHearingDate(cData.hearingDate);
-        setHearingTime(cData.hearingTime || "09:00 AM");
+      const found = hData.find((h) => h.hearingNumber === stageNumber);
+      if (found) {
+        setCurrentHearing(found);
       }
     } catch (err) {
       console.error(err);
@@ -67,107 +46,19 @@ export default function HearingStagePage({
     loadData();
   }, [loadData]);
 
-  const saveCurrentHearing = async (desiredComplaintStatus?: string) => {
-    if (!hearingDate || !hearingTime) {
-      alert("Hearing Date and Hearing Time are required.");
-      return false;
-    }
-
-    await hearingsApi.save({
-      complaintId: id,
-      hearingNumber: stageNumber,
-      hearingDate,
-      hearingTime,
-      timeConsumed,
-      assignedMediator,
-      venue,
-      decision,
-      mediationNotes,
-      complaintStatus: desiredComplaintStatus || "Scheduled",
-      status: "Scheduled",
-    });
-    return true;
-  };
-
-  // Stage Handlers
-  const handleProceedNextSummon = async (nextStage: number) => {
-    setActionLoading(true);
-    try {
-      const ok = await saveCurrentHearing("Scheduled");
-      if (ok) {
-        router.push(`/admin/complaints/${id}/summon/${nextStage}`);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save hearing details.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleScheduleCurrentHearing = async () => {
-    setActionLoading(true);
-    try {
-      const ok = await saveCurrentHearing("Scheduled");
-      if (ok) {
-        router.push("/admin/complaints");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save hearing information.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleResolve = async () => {
-    if (!confirm(`Are you sure you want to mark Stage ${stageNumber} as RESOLVED?`)) return;
-    setActionLoading(true);
-    try {
-      const ok = await saveCurrentHearing("Resolved");
-      if (ok) {
-        router.push("/admin/complaints");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to resolve complaint.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleUnsettled = async () => {
-    if (!confirm("Are you sure you want to mark this complaint as UNSETTLED? It will proceed to trial court.")) return;
-    setActionLoading(true);
-    try {
-      const ok = await saveCurrentHearing("Unsettled");
-      if (ok) {
-        router.push("/admin/complaints");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to unsettle complaint.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleCancel = () => {
-    if (confirm("Return to complaints list? Hearing state will be preserved.")) {
-      router.push("/admin/complaints");
-    }
+  const handleProceedNextSummon = (nextStage: number) => {
+    router.push(`/admin/complaints/${id}/summon/${nextStage}`);
   };
 
   const stageTitles: Record<number, string> = {
-    1: "FIRST HEARING",
-    2: "SECOND HEARING",
-    3: "THIRD HEARING",
-    4: "FOURTH HEARING",
+    1: "First Hearing",
+    2: "Second Hearing",
+    3: "Third Hearing",
   };
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-gray-500">
+      <div className="flex h-64 items-center justify-center text-gray-500 text-sm">
         Loading hearing details...
       </div>
     );
@@ -186,8 +77,36 @@ export default function HearingStagePage({
 
   const previousHearings = hearings.filter((h) => h.hearingNumber < stageNumber);
 
+  // Fallbacks for complainant, respondent, witness, hearing values
+  const complainantName = complaint.complainantInfo?.name || complaint.complainant || "N/A";
+  const complainantEmail = complaint.complainantInfo?.email || "N/A";
+  const complainantContact = complaint.complainantInfo?.contact || "N/A";
+  const complainantAddress = complaint.complainantInfo?.address || "N/A";
+
+  const respondentName = complaint.respondentInfo?.name || complaint.respondent || "N/A";
+  const respondentAddress = complaint.respondentInfo?.address || "N/A";
+  const respondentContact = complaint.respondentInfo?.contact || "N/A";
+  const respondentEmail = complaint.respondentInfo?.email || "N/A";
+
+  const witnessObj = (currentHearing?.witnesses && currentHearing.witnesses.length > 0)
+    ? currentHearing.witnesses[0]
+    : null;
+  const witnessName = typeof witnessObj === "string"
+    ? witnessObj
+    : (witnessObj && typeof witnessObj === "object" && "name" in (witnessObj as object) ? String((witnessObj as any).name) : "N/A");
+  const witnessAddress = witnessObj && typeof witnessObj === "object" && "address" in (witnessObj as object)
+    ? String((witnessObj as any).address)
+    : "N/A";
+
+  const hearingDate = currentHearing?.date || complaint.hearingDate || "N/A";
+  const hearingTime = currentHearing?.time || complaint.hearingTime || "N/A";
+  const timeConsumed = currentHearing?.timeConsumed || "N/A";
+  const assignedMediator = currentHearing?.assignedMediator || "N/A";
+  const decision = currentHearing?.decision || "N/A";
+  const messageNotes = currentHearing?.mediationNotes || "No notes available for this hearing.";
+
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
         title={`${stageTitles[stageNumber]} — Complaint #${complaint.complaintNo}`}
         action={
@@ -201,69 +120,18 @@ export default function HearingStagePage({
         }
       />
 
-      {/* Complaint & Parties Summary */}
-      <div className="admin-card p-5 space-y-4">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
-            Complaint Overview
-          </h3>
-          <StatusBadge status="Scheduled" hearingNumber={stageNumber} />
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-          <div>
-            <p className="text-xs text-gray-500 font-medium">Complaint #</p>
-            <p className="font-bold text-primary">{complaint.complaintNo}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 font-medium">Date Filed</p>
-            <p className="font-semibold text-gray-800">{complaint.dateFiled}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 font-medium">Category</p>
-            <p className="font-semibold text-gray-800">{complaint.category}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 font-medium">Priority</p>
-            <div className="mt-0.5">
-              <PriorityBadge priority={complaint.priority} />
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100 text-sm">
-          <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-            <p className="text-xs font-bold text-gray-500 uppercase">Complainant Information</p>
-            <p className="font-bold text-gray-900 mt-1">{complaint.complainantInfo.name || complaint.complainant}</p>
-            <p className="text-xs text-gray-600">{complaint.complainantInfo.address}</p>
-            <p className="text-xs text-gray-600">Contact: {complaint.complainantInfo.contact || "N/A"}</p>
-          </div>
-          <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-            <p className="text-xs font-bold text-gray-500 uppercase">Respondent Information</p>
-            <p className="font-bold text-gray-900 mt-1">{complaint.respondentInfo.name || complaint.respondent}</p>
-            <p className="text-xs text-gray-600">{complaint.respondentInfo.address}</p>
-            <p className="text-xs text-gray-600">Contact: {complaint.respondentInfo.contact || "N/A"}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Previous Hearings History (Preserved Data) */}
+      {/* Display Previous Hearing Records if existing */}
       {previousHearings.length > 0 && (
         <div className="admin-card p-5 space-y-3">
           <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-700 pb-2 border-b border-gray-100">
             <MaterialIcon name="history" className="text-primary text-lg" />
-            Previous Hearing Records
+            Previous Hearing Records [READ ONLY]
           </h3>
-
           <div className="space-y-3">
             {previousHearings.map((ph) => (
               <div key={ph.id} className="bg-gray-50 p-3.5 rounded-lg border border-gray-200 text-xs space-y-1.5">
                 <div className="flex items-center justify-between font-bold text-gray-900">
-                  <span>
-                    {ph.hearingNumber === 1 && "1ST HEARING RECORD"}
-                    {ph.hearingNumber === 2 && "2ND HEARING RECORD"}
-                    {ph.hearingNumber === 3 && "3RD HEARING RECORD"}
-                  </span>
+                  <span>HEARING #{ph.hearingNumber} RECORD [READ ONLY]</span>
                   <span className="text-gray-500">{ph.date} {ph.time}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-gray-700">
@@ -278,210 +146,171 @@ export default function HearingStagePage({
         </div>
       )}
 
-      {/* Current Hearing Editable Fields Form */}
-      <div className="admin-card p-5 space-y-4">
-        <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-800 pb-2 border-b border-gray-100">
-          <MaterialIcon name="edit_calendar" className="text-primary text-xl" />
-          {stageTitles[stageNumber]} Information Entry
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600">Hearing Date *</label>
-            <input
-              type="date"
-              value={hearingDate}
-              onChange={(e) => setHearingDate(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-600">Hearing Time *</label>
-            <input
-              type="text"
-              placeholder="e.g. 09:00 AM"
-              value={hearingTime}
-              onChange={(e) => setHearingTime(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-600">Time Consumed</label>
-            <input
-              type="text"
-              placeholder="e.g. 1 hour 15 minutes"
-              value={timeConsumed}
-              onChange={(e) => setTimeConsumed(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-600">Assigned Mediator</label>
-            <input
-              type="text"
-              placeholder="e.g. Brgy. Kagawad Ramos"
-              value={assignedMediator}
-              onChange={(e) => setAssignedMediator(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-
-          <div className="sm:col-span-2">
-            <label className="block text-xs font-semibold text-gray-600">Venue</label>
-            <input
-              type="text"
-              value={venue}
-              onChange={(e) => setVenue(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
+      {/* Main Hearing Display Form (Read-Only matching Reference Image Structure) */}
+      <div className="admin-card p-6 md:p-8 bg-white space-y-6 border border-gray-200 shadow-sm rounded-2xl">
+        {/* Section 1: Complainant Information */}
+        <div className="space-y-3">
+          <h3 className="text-base font-bold text-gray-900">Complainant Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-xs text-gray-400 font-medium">Full Name</p>
+              <p className="font-bold text-gray-900 mt-0.5">{complainantName}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium">Email Address</p>
+              <p className="font-bold text-gray-900 mt-0.5">{complainantEmail}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium">Mobile Number</p>
+              <p className="font-bold text-gray-900 mt-0.5">{complainantContact}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium">Complete Address</p>
+              <p className="font-bold text-gray-900 mt-0.5">{complainantAddress}</p>
+            </div>
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-gray-600">Decision Outcome</label>
-          <textarea
-            rows={2}
-            placeholder="Record official mediation outcome or consensus reached..."
-            value={decision}
-            onChange={(e) => setDecision(e.target.value)}
-            className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
+        {/* Section 2: Respondent Information */}
+        <div className="space-y-3 pt-2">
+          <h3 className="text-base font-bold text-gray-900">Respondent Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-xs text-gray-400 font-medium mb-1">Full Name</p>
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
+                {respondentName}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium mb-1">Complete Address</p>
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
+                {respondentAddress}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium mb-1">Mobile Number</p>
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
+                {respondentContact}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium mb-1">Email Address</p>
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
+                {respondentEmail}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-gray-600">Message / Hearing Notes</label>
-          <textarea
-            rows={3}
-            placeholder="Detailed notes regarding proceedings, claims, and agreement points..."
-            value={mediationNotes}
-            onChange={(e) => setMediationNotes(e.target.value)}
-            className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
+        {/* Section 3: Witness */}
+        <div className="space-y-3 pt-2">
+          <h3 className="text-base font-bold text-gray-900">Witness</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-xs text-gray-400 font-medium mb-1">Full Name</p>
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
+                {witnessName}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium mb-1">Complete Address</p>
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
+                {witnessAddress}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Action Buttons per Stage */}
-      <div className="flex flex-wrap items-center justify-end gap-3 pt-3">
-        <button
-          type="button"
-          onClick={() => router.push("/admin/complaints")}
-          disabled={actionLoading}
-          className="btn btn-secondary btn-lg min-w-[120px]"
-        >
-          <MaterialIcon name="arrow_back" />
-          BACK
-        </button>
+        {/* Section 4: Hearing Schedule & Decision */}
+        <div className="space-y-4 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-base font-bold text-gray-900 mb-1">Hearing Date</p>
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white flex items-center justify-between font-medium text-gray-800 text-sm shadow-sm">
+                <span>{hearingDate}</span>
+                <MaterialIcon name="calendar_today" className="text-gray-400 text-lg" />
+              </div>
+            </div>
+            <div className="hidden md:block" />
 
-        {stageNumber === 1 && (
+            <div>
+              <p className="text-base font-bold text-gray-900 mb-1">Hearing Time</p>
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white font-medium text-gray-800 text-sm shadow-sm">
+                {hearingTime}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-base font-bold text-gray-900 mb-1">Time Consumed</p>
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white font-medium text-gray-800 text-sm shadow-sm">
+                {timeConsumed}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-base font-bold text-gray-900 mb-1">Assign Mediator</p>
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white flex items-center justify-between font-medium text-gray-800 text-sm shadow-sm">
+                <span>{assignedMediator}</span>
+                <MaterialIcon name="expand_more" className="text-gray-400 text-xl" />
+              </div>
+            </div>
+
+            <div>
+              <p className="text-base font-bold text-gray-900 mb-1">Decision</p>
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white flex items-center justify-between font-medium text-gray-800 text-sm shadow-sm">
+                <span>{decision}</span>
+                <MaterialIcon name="expand_more" className="text-gray-400 text-xl" />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="w-full p-4 border border-gray-200 rounded-2xl bg-white text-sm text-gray-800 leading-relaxed shadow-sm min-h-[100px]">
+              &ldquo;{messageNotes}&rdquo;
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons matching Reference Image layout */}
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-4 border-t border-gray-100">
           <button
             type="button"
-            onClick={() => handleProceedNextSummon(2)}
-            disabled={actionLoading}
-            className="btn btn-primary btn-lg min-w-[180px]"
+            onClick={() => router.push("/admin/complaints")}
+            className="px-8 py-2.5 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-semibold text-sm transition-colors min-w-[120px]"
           >
-            <MaterialIcon name="description" />
-            SECOND HEARING
+            Back
           </button>
-        )}
 
-        {stageNumber === 2 && (
-          <>
+          {stageNumber === 1 && (
             <button
               type="button"
-              onClick={handleResolve}
-              disabled={actionLoading}
-              className="btn btn-success btn-lg min-w-[140px]"
+              onClick={() => handleProceedNextSummon(2)}
+              className="px-8 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors min-w-[160px]"
             >
-              <MaterialIcon name="check_circle" />
-              RESOLVED
+              Second Hearing
             </button>
-            <button
-              type="button"
-              onClick={handleScheduleCurrentHearing}
-              disabled={actionLoading}
-              className="btn btn-secondary btn-lg min-w-[160px]"
-            >
-              <MaterialIcon name="save" />
-              SCHEDULE HEARING
-            </button>
+          )}
+
+          {stageNumber === 2 && (
             <button
               type="button"
               onClick={() => handleProceedNextSummon(3)}
-              disabled={actionLoading}
-              className="btn btn-primary btn-lg min-w-[180px]"
+              className="px-8 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors min-w-[160px]"
             >
-              <MaterialIcon name="description" />
-              THIRD HEARING
+              Third Hearing
             </button>
-          </>
-        )}
+          )}
 
-        {stageNumber === 3 && (
-          <>
-            <button
-              type="button"
-              onClick={handleResolve}
-              disabled={actionLoading}
-              className="btn btn-success btn-lg min-w-[140px]"
-            >
-              <MaterialIcon name="check_circle" />
-              RESOLVED
-            </button>
-            <button
-              type="button"
-              onClick={handleScheduleCurrentHearing}
-              disabled={actionLoading}
-              className="btn btn-secondary btn-lg min-w-[160px]"
-            >
-              <MaterialIcon name="save" />
-              SCHEDULE HEARING
-            </button>
+          {stageNumber === 3 && (
             <button
               type="button"
               onClick={() => handleProceedNextSummon(4)}
-              disabled={actionLoading}
-              className="btn btn-primary btn-lg min-w-[180px]"
+              className="px-8 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors min-w-[160px]"
             >
-              <MaterialIcon name="description" />
-              FOURTH HEARING
+              Fourth Hearing
             </button>
-          </>
-        )}
-
-        {stageNumber === 4 && (
-          <>
-            <button
-              type="button"
-              onClick={handleResolve}
-              disabled={actionLoading}
-              className="btn btn-success btn-lg min-w-[140px]"
-            >
-              <MaterialIcon name="check_circle" />
-              RESOLVED
-            </button>
-            <button
-              type="button"
-              onClick={handleUnsettled}
-              disabled={actionLoading}
-              className="btn btn-danger btn-lg min-w-[140px]"
-            >
-              <MaterialIcon name="gavel" />
-              UNSETTLED
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              disabled={actionLoading}
-              className="btn btn-secondary btn-lg min-w-[120px]"
-            >
-              <MaterialIcon name="close" />
-              CANCEL
-            </button>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

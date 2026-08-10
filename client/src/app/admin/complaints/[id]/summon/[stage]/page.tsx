@@ -1,9 +1,9 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { complaintsApi } from "@/services/api";
+import { complaintsApi, hearingsApi } from "@/services/api";
 import type { Complaint } from "@/lib/types";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { MaterialIcon } from "@/components/admin/MaterialIcon";
@@ -33,24 +33,45 @@ export default function StageSummonFormPage({
   };
   const stageOrdinal = stageOrdinals[stageNum] || `${stageNum}TH`;
 
+  const initSummon = useCallback(async () => {
+    try {
+      await hearingsApi.save({
+        complaintId: id,
+        hearingNumber: stageNum,
+        complaintStatus: "In Progress",
+        status: "In Progress",
+      });
+      const data = await complaintsApi.getById(id);
+      setComplaint(data);
+      if (data.hearingDate) setHearingDate(data.hearingDate);
+      if (data.hearingTime) setHearingTime(data.hearingTime);
+      if (data.venue) setVenue(data.venue);
+    } catch (err) {
+      console.error(`Failed to initialize summon ${stageNum} stage`, err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, stageNum]);
+
   useEffect(() => {
-    complaintsApi
-      .getById(id)
-      .then((data) => {
-        setComplaint(data);
-        if (data.hearingDate) setHearingDate(data.hearingDate);
-        if (data.hearingTime) setHearingTime(data.hearingTime);
-        if (data.venue) setVenue(data.venue);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [id]);
+    initSummon();
+  }, [initSummon]);
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleBack = () => {
+  const handleBack = async () => {
+    try {
+      await hearingsApi.save({
+        complaintId: id,
+        hearingNumber: stageNum,
+        complaintStatus: "In Progress",
+        status: "In Progress",
+      });
+    } catch (err) {
+      console.error(`Failed to preserve In Progress ${stageNum} status`, err);
+    }
     router.push("/admin/complaints");
   };
 
