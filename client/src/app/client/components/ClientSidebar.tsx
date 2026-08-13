@@ -10,7 +10,6 @@ import { mediaUrl } from "@/lib/media";
 const sidebarItems = [
   { label: "View Profile", href: "/client/profile", icon: "settings" },
   { label: "Activity Timeline", href: "/client/activity", icon: "format_list_bulleted" },
-  { label: "Notification", href: "/client/notifications", icon: "notifications" },
   { label: "View Complaints", href: "/client/complaints", icon: "description" },
 ];
 
@@ -46,13 +45,6 @@ export function ClientSidebar({ user }: { user: AuthUser | null }) {
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-bold text-slate-900">{displayName}</p>
-            <Link
-              href="/client/profile"
-              className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#2563EB]"
-            >
-              View Profile
-              <MaterialIcon name="settings" className="text-[14px]" />
-            </Link>
           </div>
         </div>
 
@@ -66,7 +58,7 @@ export function ClientSidebar({ user }: { user: AuthUser | null }) {
                 {index === 1 ? <div className="my-3 border-t border-slate-200" /> : null}
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 rounded-xl px-2 py-2.5 text-sm font-medium transition ${
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2.5 text-sm font-medium transition ${
                     active ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -86,7 +78,7 @@ export function ClientSidebar({ user }: { user: AuthUser | null }) {
           <button
             type="button"
             onClick={handleLogout}
-            className="mt-2 flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+            className="mt-2 flex w-full cursor-pointer items-center gap-3 rounded-xl px-2 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
           >
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-slate-600">
               <MaterialIcon name="logout" className="text-[18px]" />

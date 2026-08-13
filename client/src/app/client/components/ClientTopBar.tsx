@@ -22,49 +22,56 @@ export function ClientTopBar({
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
-      <div className="mx-auto flex h-[72px] max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/client" className="flex items-center gap-3">
+      <div className="mx-auto flex h-[72px] max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <Link href="/client" className="flex shrink-0 items-center">
           <Image
-            src="/logo.jpg"
+            src="/easyreport-logo.png"
             alt="Barangay EasyReport"
-            width={44}
-            height={44}
-            className="rounded-full object-cover"
+            width={220}
+            height={56}
+            className="h-12 w-auto object-contain sm:h-14"
             priority
           />
-          <div className="leading-tight">
-            <p className="text-[15px] font-extrabold tracking-wide text-slate-900">
-              BARANGAY EASYREPORT
-            </p>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-              Report · Track · Resolve
-            </p>
-          </div>
         </Link>
 
-        {rightSlot === "home" ? (
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link
-            href="/client"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-slate-800 text-white shadow-sm transition hover:bg-slate-700"
-            aria-label="Go to dashboard"
+            href="/client/notifications"
+            className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+            aria-label="Notifications"
           >
-            <MaterialIcon name="home" className="text-[22px]" />
+            <MaterialIcon name="notifications" className="text-[22px]" />
           </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={onAvatarClick}
-            className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#2563EB] text-sm font-bold text-white shadow-sm ring-2 ring-white"
-            aria-label="Open profile menu"
-          >
-            {resolvedAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={resolvedAvatar} alt="Profile" className="h-full w-full object-cover" />
-            ) : (
-              avatarInitials
-            )}
-          </button>
-        )}
+
+          {rightSlot === "home" ? (
+            <Link
+              href="/client"
+              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-slate-800 text-white shadow-sm transition hover:bg-slate-700"
+              aria-label="Go to dashboard"
+            >
+              <MaterialIcon name="home" className="text-[22px]" />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={onAvatarClick}
+              className="relative inline-flex h-11 w-11 cursor-pointer items-center justify-center overflow-visible rounded-full bg-[#2563EB] text-sm font-bold text-white shadow-sm ring-2 ring-white"
+              aria-label="Open profile menu"
+            >
+              <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full">
+                {resolvedAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={resolvedAvatar} alt="Profile" className="h-full w-full object-cover" />
+                ) : (
+                  avatarInitials
+                )}
+              </span>
+              <span className="absolute -bottom-0.5 -right-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-900 shadow-sm ring-2 ring-white">
+                <MaterialIcon name="expand_more" className="text-[14px] leading-none text-white" />
+              </span>
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );

@@ -126,35 +126,28 @@ export default function ClientHomePage() {
             <Link
               href="/client/profile"
               onClick={() => setMenuOpen(false)}
-              className="block rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="block cursor-pointer rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               View Profile
             </Link>
             <Link
               href="/client/activity"
               onClick={() => setMenuOpen(false)}
-              className="block rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="block cursor-pointer rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               Activity Timeline
             </Link>
             <Link
-              href="/client/notifications"
-              onClick={() => setMenuOpen(false)}
-              className="block rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Notification
-            </Link>
-            <Link
               href="/client/complaints"
               onClick={() => setMenuOpen(false)}
-              className="block rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="block cursor-pointer rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               View Complaints
             </Link>
             <button
               type="button"
               onClick={handleLogout}
-              className="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50"
+              className="block w-full cursor-pointer rounded-xl px-3 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50"
             >
               Log out
             </button>
@@ -166,7 +159,7 @@ export default function ClientHomePage() {
         className="relative flex min-h-[280px] items-center justify-center bg-cover bg-center px-4 py-16 sm:min-h-[340px]"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(15,23,42,0.45), rgba(15,23,42,0.45)), url('https://images.unsplash.com/photo-1477959858617-67f85b2b74cd?auto=format&fit=crop&w=1600&q=80')",
+            "linear-gradient(rgba(15,23,42,0.35), rgba(15,23,42,0.35)), url('/hero-banner.png')",
         }}
       >
         <div className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">
