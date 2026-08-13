@@ -1,8 +1,12 @@
 import axios from "axios";
+import { authApi } from "@/services/auth";
 import type {
+  ActivityLog,
+  AuthUser,
   Complaint,
   Hearing,
   MonthlyAnalytics,
+  Notification,
   PersonInfo,
   Resident,
 } from "@/lib/types";
@@ -12,7 +16,53 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const api = axios.create({
   baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 });
+
+api.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("accessToken");
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (typeof FormData !== "undefined" && config.data instanceof FormData && config.headers) {
+      delete config.headers["Content-Type"];
+    }
+  }
+  return config;
+});
+
+// Response interceptor to attempt token refresh on 401 and retry the original request
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error?.config;
+    if (!originalRequest) return Promise.reject(error);
+
+    const url = String(originalRequest.url || "");
+    const isAuthRefresh = url.includes("/api/auth/refresh") || url.includes("/api/auth/login");
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRefresh) {
+      originalRequest._retry = true;
+      try {
+        const refreshRes = await authApi.refresh();
+        if (refreshRes?.accessToken) {
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers["Authorization"] = `Bearer ${refreshRes.accessToken}`;
+          return api(originalRequest);
+        }
+      } catch {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("user");
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export interface DashboardData {
   stats: {
@@ -123,6 +173,69 @@ export const summonsApi = {
 
 export const reportsApi = {
   getAll: () => api.get<ReportsData>("/api/reports").then((r) => r.data),
+};
+
+export const clientApi = {
+  getProfile: () => api.get<AuthUser>("/api/client/profile").then((r) => r.data),
+  updateProfile: (data: {
+    fullname?: string;
+    email?: string;
+    phoneNumber?: string | null;
+  }) => api.put<AuthUser>("/api/client/profile", data).then((r) => r.data),
+  uploadProfilePicture: (file: File) => {
+    const formData = new FormData();
+    formData.append("profilePicture", file);
+    return api
+      .post<AuthUser>("/api/client/profile/picture", formData)
+      .then((r) => r.data);
+  },
+  getComplaints: (filters?: {
+    search?: string;
+    status?: string;
+    priority?: string;
+    category?: string;
+    limit?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.search) params.append("search", filters.search);
+    if (filters?.status) params.append("status", filters.status);
+    if (filters?.priority) params.append("priority", filters.priority);
+    if (filters?.category) params.append("category", filters.category);
+    if (filters?.limit) params.append("limit", String(filters.limit));
+    const queryString = params.toString();
+    return api
+      .get<Complaint[]>(`/api/client/complaints${queryString ? `?${queryString}` : ""}`)
+      .then((r) => r.data);
+  },
+  getComplaintById: (id: string) =>
+    api.get<Complaint>(`/api/client/complaints/${id}`).then((r) => r.data),
+  createComplaint: (data: {
+    category: string;
+    priority: string;
+    respondentName: string;
+    respondentAddress?: string;
+    respondentContact?: string;
+    respondentEmail?: string;
+    respondentAge?: number;
+    description?: string;
+    evidenceFiles?: File[];
+  }) => {
+    const formData = new FormData();
+    formData.append("category", data.category);
+    formData.append("priority", data.priority);
+    formData.append("respondentName", data.respondentName);
+    if (data.respondentAddress) formData.append("respondentAddress", data.respondentAddress);
+    if (data.respondentContact) formData.append("respondentContact", data.respondentContact);
+    if (data.respondentEmail) formData.append("respondentEmail", data.respondentEmail);
+    if (data.respondentAge != null) formData.append("respondentAge", String(data.respondentAge));
+    if (data.description) formData.append("description", data.description);
+    (data.evidenceFiles || []).forEach((file) => formData.append("evidence", file));
+    return api.post<Complaint>("/api/client/complaints", formData).then((r) => r.data);
+  },
+  getNotifications: () =>
+    api.get<Notification[]>("/api/client/notifications").then((r) => r.data),
+  getActivity: () =>
+    api.get<ActivityLog[]>("/api/client/activity").then((r) => r.data),
 };
 
 export const residentsApi = {

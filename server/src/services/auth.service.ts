@@ -106,7 +106,13 @@ export class AuthService {
       throw new Error("Invalid username or password");
     }
 
-    const payload = { id: user.id, username: user.username, role: user.role };
+    const payload = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      fullname: user.fullname,
+      role: user.role,
+    };
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
@@ -159,6 +165,8 @@ export class AuthService {
     const newAccessToken = generateAccessToken({
       id: user.id,
       username: user.username,
+      email: user.email,
+      fullname: user.fullname,
       role: user.role,
     });
 
@@ -302,7 +310,13 @@ export class AuthService {
       });
     }
 
-    const payload = { id: user.id, username: user.username, role: user.role };
+    const payload = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      fullname: user.fullname,
+      role: user.role,
+    };
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
@@ -320,5 +334,11 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  static async getUserById(id: number) {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return null;
+    return toAuthUser(user);
   }
 }

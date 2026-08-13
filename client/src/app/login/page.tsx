@@ -39,12 +39,11 @@ export default function LoginPage() {
         setSuccess("Login successful! Redirecting...");
         const role = response.user.role.toUpperCase();
 
-        // Redirect based on authenticated user's role
         setTimeout(() => {
           if (role === "ADMIN") {
             router.push("/admin/dashboard");
           } else {
-            router.push("/resident/dashboard");
+            router.push("/client");
           }
         }, 800);
       } else {

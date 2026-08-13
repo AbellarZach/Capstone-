@@ -60,6 +60,9 @@ export const authApi = {
     if (res.data.accessToken) {
       localStorage.setItem("accessToken", res.data.accessToken);
     }
+    if (res.data.refreshToken) {
+      localStorage.setItem("refreshToken", res.data.refreshToken);
+    }
     if (res.data.user) {
       localStorage.setItem("user", JSON.stringify(res.data.user));
     }
@@ -84,6 +87,12 @@ export const authApi = {
     const res = await api.post<AuthResponse>("/api/auth/refresh", { refreshToken });
     if (res.data.accessToken) {
       localStorage.setItem("accessToken", res.data.accessToken);
+    }
+    if (res.data.refreshToken) {
+      localStorage.setItem("refreshToken", res.data.refreshToken);
+    }
+    if (res.data.user) {
+      localStorage.setItem("user", JSON.stringify(res.data.user));
     }
     return res.data;
   },
@@ -115,8 +124,19 @@ export const authApi = {
   },
 
   getMe: async (): Promise<AuthResponse> => {
-    const res = await api.get<AuthResponse>("/api/auth/me");
-    return res.data;
+    try {
+      const res = await api.get<AuthResponse>("/api/auth/me");
+      return res.data;
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        const refreshRes = await authApi.refresh();
+        if (refreshRes.accessToken) {
+          const retry = await api.get<AuthResponse>("/api/auth/me");
+          return retry.data;
+        }
+      }
+      throw err;
+    }
   },
 };
 

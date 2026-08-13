@@ -1,11 +1,13 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import path from "path";
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 
 import authRoutes from "./routes/auth.routes";
 const complaintRoutes = require("../routes/complaintRoutes");
+const clientRoutes = require("../routes/clientRoutes");
 const hearingRoutes = require("../routes/hearingRoutes");
 const summonRoutes = require("../routes/summonRoutes");
 const reportRoutes = require("../routes/reportRoutes");
@@ -21,18 +23,17 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "12mb" }));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/", (_req: Request, res: Response) => {
   res.json({ message: "Barangay EasyReport API Running (TypeScript)" });
 });
 
-// Authentication API
 app.use("/api/auth", authRoutes);
-
-// Legacy/Domain APIs
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/admin/complaints", complaintRoutes);
+app.use("/api/client", clientRoutes);
 app.use("/api/hearings", hearingRoutes);
 app.use("/api/summons", summonRoutes);
 app.use("/api/reports", reportRoutes);

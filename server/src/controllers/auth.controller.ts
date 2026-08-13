@@ -172,9 +172,15 @@ export class AuthController {
       if (!req.user) {
         return res.status(401).json({ success: false, message: "Unauthorized" });
       }
+
+      const user = await AuthService.getUserById(req.user.id);
+      if (!user) {
+        return res.status(401).json({ success: false, message: "Unauthorized" });
+      }
+
       res.status(200).json({
         success: true,
-        user: req.user,
+        user,
       });
     } catch (err: any) {
       res.status(500).json({ success: false, message: err.message });

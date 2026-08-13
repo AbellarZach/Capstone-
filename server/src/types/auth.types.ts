@@ -16,6 +16,8 @@ export interface LoginDto {
 export interface TokenPayload {
   id: number;
   username: string;
+  email: string;
+  fullname?: string | null;
   role: string;
 }
 

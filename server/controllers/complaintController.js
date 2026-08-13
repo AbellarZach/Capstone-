@@ -1,5 +1,8 @@
 const complaintModel = require("../models/complaintModel");
-const pool = require("../database/db");
+const {
+  logResidentComplaintActivity,
+  notifyResident,
+} = require("../utils/residentNotify");
 
 async function getAll(req, res) {
   try {
@@ -40,6 +43,17 @@ async function getById(req, res) {
   }
 }
 
+function statusActionLabel(status) {
+  const value = String(status || "");
+  if (/resolved/i.test(value)) return "Resolved";
+  if (/scheduled/i.test(value)) return "Hearing Scheduled";
+  if (/progress/i.test(value)) return "In Progress";
+  if (/cancel|reject/i.test(value)) return "Cancelled";
+  if (/unsettled/i.test(value)) return "Unsettled";
+  if (/pending/i.test(value)) return "Reviewed by Admin";
+  return "Complaint Updated";
+}
+
 async function updateStatus(req, res) {
   try {
     const { status } = req.body;
@@ -47,9 +61,14 @@ async function updateStatus(req, res) {
     const complaint = await complaintModel.updateStatus(req.params.id, status);
     if (!complaint) return res.status(404).json({ message: "Complaint not found" });
 
-    await pool.query(
-      "INSERT INTO activity_logs (action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4)",
-      ["update_complaint_status", "complaint", req.params.id, JSON.stringify({ status })]
+    const action = statusActionLabel(status);
+    await logResidentComplaintActivity(req.params.id, action, { status });
+    await notifyResident(
+      req.params.id,
+      action === "Resolved"
+        ? `Your complaint ${complaint.complaintNo} has been successfully resolved.`
+        : `Your complaint ${complaint.complaintNo} is now ${status}.`,
+      action === "Resolved" ? "complaint_resolved" : "complaint_status_updated"
     );
 
     res.json(complaint);
@@ -106,9 +125,13 @@ async function approve(req, res) {
     const complaint = await complaintModel.updateStatus(req.params.id, "In Progress");
     if (!complaint) return res.status(404).json({ message: "Complaint not found" });
 
-    await pool.query(
-      "INSERT INTO activity_logs (action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4)",
-      ["approve_complaint", "complaint", req.params.id, JSON.stringify({ status: "In Progress" })]
+    await logResidentComplaintActivity(req.params.id, "Complaint Approved", {
+      status: "In Progress",
+    });
+    await notifyResident(
+      req.params.id,
+      `Your complaint ${complaint.complaintNo} was approved and is now In Progress.`,
+      "complaint_approved"
     );
 
     res.json(complaint);
@@ -121,6 +144,16 @@ async function reject(req, res) {
   try {
     const complaint = await complaintModel.updateStatus(req.params.id, "Cancelled");
     if (!complaint) return res.status(404).json({ message: "Complaint not found" });
+
+    await logResidentComplaintActivity(req.params.id, "Cancelled", {
+      status: "Cancelled",
+    });
+    await notifyResident(
+      req.params.id,
+      `Your complaint ${complaint.complaintNo} was cancelled.`,
+      "complaint_cancelled"
+    );
+
     res.json(complaint);
   } catch (err) {
     res.status(500).json({ message: err.message });

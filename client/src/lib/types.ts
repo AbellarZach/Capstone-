@@ -88,6 +88,39 @@ export interface Resident {
   dateRegistered?: string;
 }
 
+export interface Notification {
+  id: number;
+  complaintId?: number;
+  recipient?: string;
+  message?: string;
+  type?: string;
+  sentAt?: string;
+  complaintNo?: string;
+}
+
+export interface ActivityLog {
+  id: number;
+  action: string;
+  entityType?: string;
+  entityId?: number;
+  details?: any;
+  createdAt?: string;
+  complaintNo?: string;
+  category?: string;
+}
+
+export interface AuthUser {
+  id: number;
+  username: string;
+  email: string;
+  role: "ADMIN" | "RESIDENT" | string;
+  fullname?: string | null;
+  phoneNumber?: string | null;
+  isVerified?: boolean;
+  location?: string | null;
+  profilePicture?: string | null;
+}
+
 export interface DashboardStats {
   activeCases: number;
   pendingApproval: number;

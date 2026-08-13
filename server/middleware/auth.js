@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || "barangay-easyreport-secret";
+// MUST match src/utils/jwt.ts — login issues tokens with this secret.
+const JWT_SECRET =
+  process.env.JWT_SECRET || "barangay_easyreport_jwt_secret_key_2026";
 
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
@@ -29,11 +31,25 @@ function optionalAuth(req, _res, next) {
   next();
 }
 
+function requireRole(allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const normalizedRole = String(req.user.role || "").toUpperCase();
+    const normalizedAllowed = allowedRoles.map((role) => String(role || "").toUpperCase());
+    if (!normalizedAllowed.includes(normalizedRole)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    next();
+  };
+}
+
 function adminMiddleware(req, res, next) {
-  if (req.user?.role !== "admin") {
+  if (String(req.user?.role || "").toUpperCase() !== "ADMIN") {
     return res.status(403).json({ message: "Admin access required" });
   }
   next();
 }
 
-module.exports = { authMiddleware, optionalAuth, adminMiddleware, JWT_SECRET };
+module.exports = { authMiddleware, optionalAuth, requireRole, adminMiddleware, JWT_SECRET };

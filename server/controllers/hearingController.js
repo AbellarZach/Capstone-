@@ -1,6 +1,9 @@
 const hearingModel = require("../models/hearingModel");
 const complaintModel = require("../models/complaintModel");
-const pool = require("../database/db");
+const {
+  logResidentComplaintActivity,
+  notifyResident,
+} = require("../utils/residentNotify");
 
 async function getScheduled(req, res) {
   try {
@@ -63,9 +66,36 @@ async function saveHearing(req, res) {
       await complaintModel.updateStatus(complaintId, complaintStatus);
     }
 
-    await pool.query(
-      "INSERT INTO activity_logs (action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4)",
-      ["save_hearing", "hearing", hearing.id, JSON.stringify({ complaintId, hearingNumber: hearingNum })]
+    const actionLabel =
+      String(complaintStatus || "").toLowerCase().includes("resolved")
+        ? "Resolved"
+        : String(complaintStatus || "").toLowerCase().includes("progress")
+          ? "In Progress"
+          : "Hearing Scheduled";
+
+    await logResidentComplaintActivity(complaintId, actionLabel, {
+      hearingNumber: hearingNum,
+      hearingDate,
+      hearingTime,
+      venue,
+      status: complaintStatus || status || "Scheduled",
+      decision: decision || null,
+    });
+
+    await notifyResident(
+      complaintId,
+      actionLabel === "Resolved"
+        ? `Your complaint has been successfully resolved.`
+        : actionLabel === "In Progress"
+          ? `Your complaint is now In Progress.`
+          : `Hearing ${hearingNum} scheduled${hearingDate ? ` on ${hearingDate}` : ""}${
+              hearingTime ? ` at ${hearingTime}` : ""
+            }${venue ? ` (${venue})` : ""}.`,
+      actionLabel === "Resolved"
+        ? "complaint_resolved"
+        : actionLabel === "In Progress"
+          ? "complaint_status_updated"
+          : "hearing_scheduled"
     );
 
     res.status(200).json(hearing);
