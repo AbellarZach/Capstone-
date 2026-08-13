@@ -193,7 +193,7 @@ export default function ComplaintProgressPage({
     );
   }
 
-  const previousHearings = hearings.filter((h) => h.hearingNumber < stageNumber);
+
 
   // Complainant Display info
   const complainantName = complaint.complainantInfo?.name || complaint.complainant || "N/A";
@@ -246,60 +246,34 @@ export default function ComplaintProgressPage({
         </div>
       </div>
 
-      {/* Previous Hearing Records (READ ONLY) */}
-      {previousHearings.length > 0 && (
-        <div className="admin-card p-5 space-y-3">
-          <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-700 pb-2 border-b border-gray-100">
-            <MaterialIcon name="history" className="text-primary text-lg" />
-            Previous Hearing Records [READ ONLY]
-          </h3>
-          <div className="space-y-3">
-            {previousHearings.map((ph) => (
-              <div key={ph.id} className="bg-gray-50 p-3.5 rounded-lg border border-gray-200 text-xs space-y-1.5">
-                <div className="flex items-center justify-between font-bold text-gray-900">
-                  <span>HEARING #{ph.hearingNumber} RECORD [READ ONLY]</span>
-                  <span className="text-gray-500">{ph.date} {ph.time}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-gray-700">
-                  <p><strong>Mediator:</strong> {ph.assignedMediator || "N/A"}</p>
-                  <p><strong>Duration:</strong> {ph.timeConsumed || "N/A"}</p>
-                </div>
-                {ph.decision && <p className="text-gray-800"><strong>Decision:</strong> {ph.decision}</p>}
-                {ph.mediationNotes && <p className="text-gray-800"><strong>Notes:</strong> {ph.mediationNotes}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Main Interactive Form with Exact Styling of Reference Image */}
       <div className="admin-card p-6 md:p-8 bg-white space-y-6 border border-gray-200 shadow-sm rounded-2xl">
         {/* Section 1: Complainant Information */}
-        <div className="space-y-3">
-          <h3 className="text-base font-bold text-gray-900">Complainant Information</h3>
+        <div className="space-y-3 pt-2">
+          <h3 className="text-sm py-2 font-bold uppercase text-gray-900">Complainant Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-xs text-gray-400 font-medium">Full Name</p>
-              <p className="font-bold text-gray-900 mt-0.5">{complainantName}</p>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5 capitalize">{complainantName}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium">Email Address</p>
-              <p className="font-bold text-gray-900 mt-0.5">{complainantEmail}</p>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{complainantEmail}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium">Mobile Number</p>
-              <p className="font-bold text-gray-900 mt-0.5">{complainantContact}</p>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{complainantContact}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium">Complete Address</p>
-              <p className="font-bold text-gray-900 mt-0.5">{complainantAddress}</p>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5 capitalize">{complainantAddress}</p>
             </div>
           </div>
         </div>
 
         {/* Section 2: Respondent Information (Inputable) */}
         <div className="space-y-3 pt-2">
-          <h3 className="text-base font-bold text-gray-900">Respondent Information</h3>
+          <h3 className="text-sm py-2 font-bold uppercase text-gray-900">Respondent Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <label className="block text-xs text-gray-400 font-medium mb-1">Full Name</label>
@@ -308,7 +282,7 @@ export default function ComplaintProgressPage({
                 placeholder="Enter Respondent Full Name"
                 value={respondentName}
                 onChange={(e) => setRespondentName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
+                className="w-full capitalize px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
               />
             </div>
             <div>
@@ -318,7 +292,7 @@ export default function ComplaintProgressPage({
                 placeholder="Enter Complete Address"
                 value={respondentAddress}
                 onChange={(e) => setRespondentAddress(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
+                className="w-full capitalize px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
               />
             </div>
             <div>
@@ -346,7 +320,7 @@ export default function ComplaintProgressPage({
 
         {/* Section 3: Witness (Inputable) */}
         <div className="space-y-3 pt-2">
-          <h3 className="text-base font-bold text-gray-900">Witness</h3>
+          <h3 className="text-sm py-2 font-bold uppercase text-gray-900">Witness</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <label className="block text-xs text-gray-400 font-medium mb-1">Full Name</label>
@@ -355,7 +329,7 @@ export default function ComplaintProgressPage({
                 placeholder="Enter Witness Full Name"
                 value={witnessName}
                 onChange={(e) => setWitnessName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
+                className="w-full capitalize px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
               />
             </div>
             <div>
@@ -365,7 +339,7 @@ export default function ComplaintProgressPage({
                 placeholder="Enter Witness Address"
                 value={witnessAddress}
                 onChange={(e) => setWitnessAddress(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
+                className="w-full capitalize px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
               />
             </div>
           </div>
@@ -375,7 +349,7 @@ export default function ComplaintProgressPage({
         <div className="space-y-4 pt-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <label className="block text-base font-bold text-gray-900 mb-1">Hearing Date</label>
+              <label className="block text-sm py-2 font-semibold uppercase text-gray-900 mb-1">Hearing Date</label>
               <div className="relative">
                 <input
                   type="date"
@@ -388,29 +362,29 @@ export default function ComplaintProgressPage({
             <div className="hidden md:block" />
 
             <div>
-              <label className="block text-base font-bold text-gray-900 mb-1">Hearing Time</label>
+              <label className="block py-2 text-sm font-semibold uppercase text-gray-900 mb-1">Hearing Time</label>
               <input
                 type="text"
-                placeholder="e.g. 1:00 PM"
+                placeholder="1:00 PM"
                 value={hearingTime}
                 onChange={(e) => setHearingTime(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-full bg-white font-medium text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm"
+                className="w-full uppercase px-4 py-2.5 border border-gray-300 rounded-full bg-white font-medium text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm"
               />
             </div>
 
             <div>
-              <label className="block text-base font-bold text-gray-900 mb-1">Time Consumed</label>
+              <label className="block py-2 text-sm font-semibold uppercase text-gray-900 mb-1">Time Consumed</label>
               <input
                 type="text"
-                placeholder="e.g. 1 hour"
+                placeholder="1 hour"
                 value={timeConsumed}
                 onChange={(e) => setTimeConsumed(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-full bg-white font-medium text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm"
+                className="w-full uppercase px-4 py-2.5 border border-gray-300 rounded-full bg-white font-medium text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm"
               />
             </div>
 
             <div>
-              <label className="block text-base font-bold text-gray-900 mb-1">Assign Mediator</label>
+              <label className="block py-2 text-sm font-semibold uppercase text-gray-900 mb-1">Assign Mediator</label>
               <div className="relative">
                 <select
                   value={assignedMediator}
@@ -430,7 +404,7 @@ export default function ComplaintProgressPage({
             </div>
 
             <div>
-              <label className="block text-base font-bold text-gray-900 mb-1">Decision</label>
+              <label className="block py-2 text-sm font-semibold uppercase text-gray-900 mb-1">Decision</label>
               <div className="relative">
                 <select
                   value={decision}
@@ -452,13 +426,13 @@ export default function ComplaintProgressPage({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Message / Note</label>
+            <label className="block py-2 text-sm font-semibold uppercase text-gray-900 mb-1">Message / Note</label>
             <textarea
               rows={3}
               placeholder='e.g. "Despite multiple hearings, including the fourth session, no resolution has been achieved. The case remains unsettled and is recommended for escalation to the trial court for appropriate legal action."'
               value={mediationNotes}
               onChange={(e) => setMediationNotes(e.target.value)}
-              className="w-full p-4 border border-gray-300 rounded-2xl bg-white text-sm text-gray-900 leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="w-full capitalize p-4 border border-gray-300 rounded-2xl bg-white text-sm text-gray-900 leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
         </div>

@@ -113,7 +113,7 @@ export default function ComplaintResolvePage({
       {/* Overview Status Banner */}
       <div className="admin-card p-5 space-y-3 bg-white border border-gray-200 rounded-2xl shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-black">
             Case Overview Summary
           </h3>
           <StatusBadge status="Resolved" hearingNumber={stageNumber} />
@@ -144,33 +144,33 @@ export default function ComplaintResolvePage({
       <div className="admin-card p-6 md:p-8 bg-white space-y-6 border border-gray-200 shadow-sm rounded-2xl">
         <div className="flex items-center gap-2 text-base font-bold text-gray-900 border-b border-gray-200 pb-3">
           <MaterialIcon name="folder_open" className="text-primary text-xl" />
-          CASE / PENDING INFORMATION [READ-ONLY]
+          CASE
         </div>
 
         {/* Complainant Information */}
         <div className="space-y-3">
-          <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide text-xs">Complainant Information</h4>
+          <h4 className="text-sm font-bold py-2 text-gray-800 uppercase tracking-wide ">Complainant Information</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-xs text-gray-400 font-medium">Full Name</p>
-              <p className="font-bold text-gray-900 mt-0.5">{complainantName}</p>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5 capitalize">{complainantName}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium">Email Address</p>
-              <p className="font-bold text-gray-900 mt-0.5">{complainantEmail}</p>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{complainantEmail}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium">Mobile Number</p>
-              <p className="font-bold text-gray-900 mt-0.5">{complainantContact}</p>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{complainantContact}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium">Complete Address</p>
-              <p className="font-bold text-gray-900 mt-0.5">{complainantAddress}</p>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5 capitalize">{complainantAddress}</p>
             </div>
             {complainantAge !== "N/A" && (
               <div>
                 <p className="text-xs text-gray-400 font-medium">Age</p>
-                <p className="font-bold text-gray-900 mt-0.5">{complainantAge}</p>
+                <p className="font-semibold py-2 text-gray-900 mt-0.5">{complainantAge}</p>
               </div>
             )}
           </div>
@@ -178,29 +178,29 @@ export default function ComplaintResolvePage({
 
         {/* Respondent Information */}
         <div className="space-y-3 pt-2">
-          <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide text-xs">Respondent Information</h4>
+          <h4 className="text-sm font-bold  text-gray-800 uppercase tracking-wide ">Respondent Information</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-xs text-gray-400 font-medium mb-1">Full Name</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
+              <div className="w-full py-2 rounded-lg font-semibold text-gray-800 capitalize">
                 {respondentName}
               </div>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium mb-1">Complete Address</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
+              <div className="w-full py-2 rounded-lg font-semibold text-gray-800 text-sm">
                 {respondentAddress}
               </div>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium mb-1">Mobile Number</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
+              <div className="w-full py-2 rounded-lg font-semibold text-gray-800 text-sm">
                 {respondentContact}
               </div>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium mb-1">Email Address</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
+              <div className="w-full py-2 rounded-lg font-semibold text-gray-800 text-sm">
                 {respondentEmail}
               </div>
             </div>
@@ -208,17 +208,17 @@ export default function ComplaintResolvePage({
         </div>
 
         {/* Complaint Description */}
-        <div className="space-y-2 pt-2">
-          <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide text-xs">Complaint Description</h4>
-          <div className="w-full p-4 border border-gray-200 rounded-2xl bg-gray-50 text-sm text-gray-800 leading-relaxed min-h-[80px]">
+        <div className="space-y-3 pt-2">
+          <h4 className="text-sm font-bold  text-gray-800 uppercase tracking-wide">Complaint Description</h4>
+          <div className="w-full py-4 rounded-2xl text-sm text-gray-800 leading-relaxed min-h-[80px]">
             {complaint.description || "No description provided."}
           </div>
         </div>
 
         {/* Complaint Evidence */}
         {complaint.evidence && complaint.evidence.length > 0 && (
-          <div className="space-y-2 pt-2">
-            <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide text-xs">Complaint Evidence</h4>
+          <div className="space-y-3 pt-2">
+            <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Complaint Evidence</h4>
             <div className="flex flex-wrap gap-3">
               {complaint.evidence.map((ev: any, idx: number) => (
                 <a
@@ -248,6 +248,7 @@ export default function ComplaintResolvePage({
             ? String((witObj as any).address)
             : "N/A";
 
+
           const hDate = record?.date || complaint.hearingDate || "N/A";
           const hTime = record?.time || complaint.hearingTime || "N/A";
           const hDuration = record?.timeConsumed || "N/A";
@@ -263,26 +264,85 @@ export default function ComplaintResolvePage({
               <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                 <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                   <MaterialIcon name="event_note" className="text-primary text-xl" />
-                  {stageTitles[stageNum]} [READ-ONLY]
+                  {stageTitles[stageNum]}
                 </h3>
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
                   Stage {stageNum} Record
                 </span>
               </div>
 
-              {/* Witness Information */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Witness</h4>
+              {/* Complainant Information */}
+              <div className="space-y-6">
+                <h4 className="text-sm font-bold text-black uppercase tracking-wide ">Complainant Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium">Full Name</p>
+                    <p className="font-semibold py-2 text-gray-900 mt-0.5">{complainantName}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium">Email Address</p>
+                    <p className="font-semibold py-2 text-gray-900 mt-0.5">{complainantEmail}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium">Mobile Number</p>
+                    <p className="font-semibold py-2 text-gray-900 mt-0.5">{complainantContact}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium">Complete Address</p>
+                    <p className="font-semibold py-2 text-gray-900 mt-0.5">{complainantAddress}</p>
+                  </div>
+                  {complainantAge !== "N/A" && (
+                    <div>
+                      <p className="text-xs text-gray-400 font-medium">Age</p>
+                      <p className="font-semibold py-2 text-gray-900 mt-0.5">{complainantAge}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Respondent Information */}
+              <div className="space-y-6 pt-2">
+                <h4 className="text-sm font-bold text-black uppercase tracking-wide">Respondent Information</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-xs text-gray-400 font-medium mb-1">Full Name</p>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
+                    <div className="w-full py-2 rounded-lg font-semibold text-gray-800 text-sm">
+                      {respondentName}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium mb-1">Complete Address</p>
+                    <div className="w-full py-2 rounded-lg font-semibold text-gray-800 text-sm">
+                      {respondentAddress}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium mb-1">Mobile Number</p>
+                    <div className="w-full py-2 rounded-lg font-semibold text-gray-800 text-sm">
+                      {respondentContact}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium mb-1">Email Address</p>
+                    <div className="w-full py-2 rounded-lg font-semibold text-gray-800 text-sm">
+                      {respondentEmail}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Witness Information */}
+              <div className="space-y-6">
+                <h4 className="text-sm font-bold text-black uppercase tracking-wider">Witness</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium mb-1">Full Name</p>
+                    <div className="w-full py-2 capitalize rounded-lg font-semibold text-gray-800 text-sm">
                       {witName}
                     </div>
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 font-medium mb-1">Complete Address</p>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
+                    <div className="w-full py-2 capitalize rounded-lg font-semibold text-gray-800 text-sm">
                       {witAddress}
                     </div>
                   </div>
@@ -293,48 +353,45 @@ export default function ComplaintResolvePage({
               <div className="space-y-4 pt-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-base font-bold text-gray-900 mb-1">Hearing Date</p>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white flex items-center justify-between font-medium text-gray-800 text-sm shadow-sm">
+                    <p className="text-sm font-bold text-black uppercase mb-1">Hearing Date</p>
+                    <div className="w-full py-4  flex items-center justify-between font-medium text-gray-800 text-sm ">
                       <span>{hDate}</span>
-                      <MaterialIcon name="calendar_today" className="text-gray-400 text-lg" />
                     </div>
                   </div>
                   <div className="hidden md:block" />
 
                   <div>
-                    <p className="text-base font-bold text-gray-900 mb-1">Hearing Time</p>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white font-medium text-gray-800 text-sm shadow-sm">
+                    <p className="text-sm font-bold text-gray-900 uppercase mb-1">Hearing Time</p>
+                    <div className="w-full py-4 flex items-center justify-between font-medium text-gray-800 text-sm">
                       {hTime}
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-base font-bold text-gray-900 mb-1">Time Consumed</p>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white font-medium text-gray-800 text-sm shadow-sm">
+                    <p className="text-sm font-bold text-gray-900 uppercase mb-1">Time Consumed</p>
+                    <div className="w-full py-4  flex items-center justify-between font-medium text-gray-800 text-sm">
                       {hDuration}
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-base font-bold text-gray-900 mb-1">Assign Mediator</p>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white flex items-center justify-between font-medium text-gray-800 text-sm shadow-sm">
+                    <p className="text-sm font-bold text-gray-900 uppercase mb-1">Assign Mediator</p>
+                    <div className="w-full py-4  flex items-center justify-between font-medium text-gray-800 text-sm">
                       <span>{hMediator}</span>
-                      <MaterialIcon name="expand_more" className="text-gray-400 text-xl" />
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-base font-bold text-gray-900 mb-1">Decision</p>
-                    <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white flex items-center justify-between font-medium text-gray-800 text-sm shadow-sm">
+                    <p className="text-sm font-bold text-gray-900 uppercase mb-1">Decision</p>
+                    <div className="w-full py-4  flex items-center justify-between font-medium text-gray-800 text-sm">
                       <span>{hDecision}</span>
-                      <MaterialIcon name="expand_more" className="text-gray-400 text-xl" />
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold text-gray-600 mb-1">Message / Note</p>
-                  <div className="w-full p-4 border border-gray-200 rounded-2xl bg-white text-sm text-gray-800 leading-relaxed shadow-sm min-h-[90px]">
+                  <p className="text-base font-semibold text-gray-900 uppercase mb-1">Note</p>
+                  <div className="w-full capitalize py-4 text-sm text-gray-800 leading-relaxed ">
                     &ldquo;{hNotes}&rdquo;
                   </div>
                 </div>
@@ -344,16 +401,6 @@ export default function ComplaintResolvePage({
         })}
       </div>
 
-      {/* Bottom Back Button */}
-      <div className="flex justify-center pt-4">
-        <button
-          type="button"
-          onClick={() => router.push("/admin/complaints")}
-          className="px-10 py-2.5 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-semibold text-sm transition-colors min-w-[140px]"
-        >
-          BACK
-        </button>
-      </div>
     </div>
   );
 }
