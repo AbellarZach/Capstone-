@@ -3,79 +3,108 @@
 import { useEffect, useMemo, useState } from "react";
 import { clientApi } from "@/services/api";
 import type { ActivityLog } from "@/lib/types";
-import { MaterialIcon } from "@/components/admin/MaterialIcon";
 import { ClientPageShell } from "../components/ClientPageShell";
 
-function formatLeftDate(value?: string) {
-  if (!value) return "";
+const MARKER_COLORS = [
+  "bg-[#C4B5FD]",
+  "bg-[#EC4899]",
+  "bg-[#FB923C]",
+  "bg-[#94A3B8]",
+];
+
+function formatDateTime(value?: string) {
+  if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString(undefined, {
-    month: "long",
+
+  const datePart = date.toLocaleDateString(undefined, {
+    month: "short",
     day: "numeric",
     year: "numeric",
+  });
+  const timePart = date.toLocaleTimeString(undefined, {
     hour: "numeric",
     minute: "2-digit",
   });
+
+  return `${datePart} • ${timePart}`;
 }
 
-function getVisual(action: string) {
-  const value = action.toLowerCase();
-  if (value.includes("resolve")) {
-    return { color: "bg-[#22C55E]", icon: "check", title: "Resolved" };
+function parseDetails(details: ActivityLog["details"]) {
+  if (!details) return null;
+  if (typeof details === "string") {
+    try {
+      return JSON.parse(details);
+    } catch {
+      return details;
+    }
   }
-  if (value.includes("hearing") || value.includes("schedule")) {
-    return { color: "bg-[#F97316]", icon: "event", title: "Hearing Scheduled" };
-  }
-  if (value.includes("approve")) {
-    return { color: "bg-[#2563EB]", icon: "verified", title: "Complaint Approved" };
-  }
-  if (value.includes("review") || value.includes("status")) {
-    return { color: "bg-[#2563EB]", icon: "sync", title: value.includes("review") ? "Reviewed by Admin" : "Complaint Updated" };
-  }
-  if (value.includes("submit")) {
-    return { color: "bg-[#22C55E]", icon: "check", title: "Complaint Submitted" };
-  }
-  if (value.includes("progress")) {
-    return { color: "bg-[#2563EB]", icon: "timelapse", title: "In Progress" };
-  }
-  return { color: "bg-[#2563EB]", icon: "circle", title: action || "Activity Update" };
+  return details;
 }
 
-function getDescription(activity: ActivityLog) {
-  const details =
-    typeof activity.details === "string"
-      ? (() => {
-          try {
-            return JSON.parse(activity.details);
-          } catch {
-            return activity.details;
-          }
-        })()
-      : activity.details;
-
+function getStatusTitle(activity: ActivityLog) {
   const action = (activity.action || "").toLowerCase();
-  if (action.includes("resolve")) return "Complaint has been resolved.";
-  if (action.includes("approve")) return "Your complaint was approved and is now being processed.";
+  if (action.includes("resolve")) return "Complaint Resolved";
   if (action.includes("hearing") || action.includes("schedule")) {
-    return details?.hearingDate
-      ? `Hearing on ${details.hearingDate}${details.venue ? ` at ${details.venue}` : ""}`
-      : "A hearing has been scheduled for your complaint.";
+    return "Mediation Session Scheduled";
   }
-  if (action.includes("review")) return "The complaint is now under evaluation.";
-  if (action.includes("submit")) return "Your complaint has been successfully submitted.";
-  if (action.includes("progress") || action.includes("status")) {
-    return details?.status
-      ? `Status changed to ${details.status}.`
-      : "Case is currently being handled.";
-  }
+  if (action.includes("summon")) return "Summons Issued";
+  if (action.includes("approve")) return "Complaint Approved";
+  if (action.includes("review")) return "Reviewed by Admin";
+  if (action.includes("submit") || action.includes("filed")) return "Complaint Filed";
+  if (action.includes("progress")) return "In Progress";
+  if (action.includes("cancel")) return "Cancelled";
+  if (action.includes("status") || action.includes("update")) return "Complaint Updated";
+  return activity.action || "Activity Update";
+}
 
+function getLogDescription(activity: ActivityLog) {
+  const details = parseDetails(activity.details);
+  const action = (activity.action || "").toLowerCase();
   const complaintNo = activity.complaintNo || details?.complaintNo;
   const category = activity.category || details?.category;
-  const parts = [];
-  if (category) parts.push(category);
+  const status = details?.status;
+
+  const parts: string[] = [];
+
+  if (action.includes("resolve")) {
+    parts.push("Your complaint has been successfully resolved by the barangay.");
+  } else if (action.includes("approve")) {
+    parts.push("Your complaint was approved and is now being processed.");
+  } else if (action.includes("summon")) {
+    parts.push(
+      details?.hearingDate
+        ? `A summons was issued for appearance on ${details.hearingDate}${
+            details.hearingTime ? ` at ${details.hearingTime}` : ""
+          }${details.venue ? ` (${details.venue})` : ""}.`
+        : "A summons has been issued for your complaint."
+    );
+  } else if (action.includes("hearing") || action.includes("schedule")) {
+    parts.push(
+      details?.hearingDate
+        ? `Mediation session scheduled on ${details.hearingDate}${
+            details.hearingTime ? ` at ${details.hearingTime}` : ""
+          }${details.venue ? ` at ${details.venue}` : ""}.`
+        : "A mediation session has been scheduled for your complaint."
+    );
+  } else if (action.includes("review")) {
+    parts.push("The complaint is now under evaluation by barangay officials.");
+  } else if (action.includes("submit") || action.includes("filed")) {
+    parts.push("Your complaint has been successfully filed and is pending review.");
+  } else if (action.includes("progress") || action.includes("status") || action.includes("update")) {
+    parts.push(status ? `Status changed to ${status}.` : "Your case progress was updated.");
+  } else if (action.includes("cancel")) {
+    parts.push("Your complaint was cancelled.");
+  } else if (typeof details === "string") {
+    parts.push(details);
+  } else {
+    parts.push("An update was recorded for your complaint.");
+  }
+
   if (complaintNo) parts.push(`Complaint No: ${complaintNo}`);
-  return parts.join(" · ") || "Activity recorded for your complaint.";
+  if (category) parts.push(`Category: ${category}`);
+
+  return parts.join(" ");
 }
 
 export default function ActivityPage() {
@@ -116,29 +145,32 @@ export default function ActivityPage() {
         ) : error ? (
           <p className="text-red-600">{error}</p>
         ) : sorted.length ? (
-          <div className="relative mx-auto max-w-3xl">
-            <div className="absolute bottom-2 left-1/2 top-2 w-px -translate-x-1/2 bg-slate-200" />
-            <div className="space-y-8">
-              {sorted.map((activity) => {
-                const visual = getVisual(activity.action);
+          <div className="relative ml-2 border-l-2 border-slate-400 pl-8 sm:ml-3 sm:pl-10">
+            <div className="space-y-10">
+              {sorted.map((activity, index) => {
+                const markerColor = MARKER_COLORS[index % MARKER_COLORS.length];
+
                 return (
-                  <div
-                    key={activity.id}
-                    className="grid grid-cols-[1fr,48px,1.3fr] items-start gap-3 sm:gap-4"
-                  >
-                    <div className="pt-1 text-right text-xs font-medium text-slate-500 sm:text-sm">
-                      {formatLeftDate(activity.createdAt)}
-                    </div>
-                    <div className="relative z-10 flex justify-center">
-                      <span
-                        className={`flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm ${visual.color}`}
-                      >
-                        <MaterialIcon name={visual.icon} className="text-[18px]" />
-                      </span>
-                    </div>
-                    <div className="pt-1">
-                      <p className="text-sm font-bold text-slate-900 sm:text-base">{visual.title}</p>
-                      <p className="mt-1 text-sm text-slate-500">{getDescription(activity)}</p>
+                  <div key={activity.id} className="relative">
+                    {/* Node sits on the vertical axis */}
+                    <span
+                      className={`absolute -left-[2.55rem] top-1 h-5 w-5 rounded-full ring-4 ring-white sm:-left-[3.05rem] sm:h-6 sm:w-6 sm:ring-[5px] ${markerColor}`}
+                      aria-hidden
+                    />
+
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-8">
+                      <p className="w-full shrink-0 text-sm font-bold leading-snug text-slate-900 sm:w-[12.5rem] sm:text-[15px]">
+                        {formatDateTime(activity.createdAt)}
+                      </p>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-900 sm:text-[15px]">
+                          {getStatusTitle(activity)}
+                        </p>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                          {getLogDescription(activity)}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 );
