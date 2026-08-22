@@ -69,7 +69,7 @@ export default function ManageComplaintsPage() {
       case "Unsettled":
         return `/admin/complaints/${c.id}/progress/${stage}`;
       case "Cancelled":
-        return `/admin/complaints/${c.id}/pending`;
+        return `/admin/complaints/${c.id}/cancel`;
       default:
         return `/admin/complaints/${c.id}/progress/${stage}`;
     }

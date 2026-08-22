@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { complaintsApi, hearingsApi } from "@/services/api";
 import type { Complaint, Hearing } from "@/lib/types";
 import { PageHeader } from "@/components/admin/PageHeader";
-import { MaterialIcon } from "@/components/admin/MaterialIcon";
+import { StatusBadge } from "@/components/admin/StatusBadge";
+import { PriorityBadge } from "@/components/admin/PriorityBadge";
 
 export default function HearingStagePage({
   params,
@@ -58,7 +59,7 @@ export default function HearingStagePage({
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-gray-500 text-sm">
+      <div className="flex h-64 items-center justify-center text-gray-500 text-sm font-medium">
         Loading hearing details...
       </div>
     );
@@ -74,8 +75,6 @@ export default function HearingStagePage({
       </div>
     );
   }
-
-  const previousHearings = hearings.filter((h) => h.hearingNumber < stageNumber);
 
   // Fallbacks for complainant, respondent, witness, hearing values
   const complainantName = complaint.complainantInfo?.name || complaint.complainant || "N/A";
@@ -105,8 +104,18 @@ export default function HearingStagePage({
   const decision = currentHearing?.decision || "N/A";
   const messageNotes = currentHearing?.mediationNotes || "No notes available for this hearing.";
 
+  // Aliases matching progress page structure
+  const witName = witnessName;
+  const witAddress = witnessAddress;
+  const hDate = hearingDate;
+  const hTime = hearingTime;
+  const hDuration = timeConsumed;
+  const hMediator = assignedMediator;
+  const hDecision = decision;
+  const hNotes = messageNotes;
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto pb-12">
       <PageHeader
         title={`${stageTitles[stageNumber]} — Complaint #${complaint.complaintNo}`}
         action={
@@ -120,158 +129,137 @@ export default function HearingStagePage({
         }
       />
 
-      {/* Display Previous Hearing Records if existing */}
-      {previousHearings.length > 0 && (
-        <div className="admin-card p-5 space-y-3">
-          <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-700 pb-2 border-b border-gray-100">
-            <MaterialIcon name="history" className="text-primary text-lg" />
-            Previous Hearing Records [READ ONLY]
+      {/* Overview Header */}
+      <div className="admin-card p-5 space-y-3">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
+            Complaint Overview
           </h3>
-          <div className="space-y-3">
-            {previousHearings.map((ph) => (
-              <div key={ph.id} className="bg-gray-50 p-3.5 rounded-lg border border-gray-200 text-xs space-y-1.5">
-                <div className="flex items-center justify-between font-bold text-gray-900">
-                  <span>HEARING #{ph.hearingNumber} RECORD [READ ONLY]</span>
-                  <span className="text-gray-500">{ph.date} {ph.time}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-gray-700">
-                  <p><strong>Mediator:</strong> {ph.assignedMediator || "N/A"}</p>
-                  <p><strong>Duration:</strong> {ph.timeConsumed || "N/A"}</p>
-                </div>
-                {ph.decision && <p className="text-gray-800"><strong>Decision:</strong> {ph.decision}</p>}
-                {ph.mediationNotes && <p className="text-gray-800"><strong>Notes:</strong> {ph.mediationNotes}</p>}
-              </div>
-            ))}
+          <StatusBadge status={complaint.status} hearingNumber={stageNumber} />
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 text-sm">
+          <div>
+            <p className="text-xs text-gray-500 font-medium">Complaint #</p>
+            <p className="font-bold text-primary">{complaint.complaintNo}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium">Date Filed</p>
+            <p className="font-semibold text-gray-800">{complaint.dateFiled}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium">Category</p>
+            <p className="font-semibold text-gray-800">{complaint.category}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium">Priority</p>
+            <div className="mt-0.5">
+              <PriorityBadge priority={complaint.priority} />
+            </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Main Hearing Display Form (Read-Only matching Reference Image Structure) */}
+      {/* Main Hearing Display Form with Progress Page CSS Styling */}
       <div className="admin-card p-6 md:p-8 bg-white space-y-6 border border-gray-200 shadow-sm rounded-2xl">
+        
         {/* Section 1: Complainant Information */}
-        <div className="space-y-3">
-          <h3 className="text-base font-bold text-gray-900">Complainant Information</h3>
+        <div className="space-y-3 pt-2">
+          <h3 className="text-sm py-2 font-bold uppercase text-gray-900">Complainant Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-xs text-gray-400 font-medium">Full Name</p>
-              <p className="font-bold text-gray-900 mt-0.5">{complainantName}</p>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5 capitalize">{complainantName}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium">Email Address</p>
-              <p className="font-bold text-gray-900 mt-0.5">{complainantEmail}</p>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{complainantEmail}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium">Mobile Number</p>
-              <p className="font-bold text-gray-900 mt-0.5">{complainantContact}</p>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{complainantContact}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium">Complete Address</p>
-              <p className="font-bold text-gray-900 mt-0.5">{complainantAddress}</p>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5 capitalize">{complainantAddress}</p>
             </div>
           </div>
         </div>
 
         {/* Section 2: Respondent Information */}
         <div className="space-y-3 pt-2">
-          <h3 className="text-base font-bold text-gray-900">Respondent Information</h3>
+          <h3 className="text-sm py-2 font-bold uppercase text-gray-900">Respondent Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-xs text-gray-400 font-medium mb-1">Full Name</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
-                {respondentName}
-              </div>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5 capitalize">{respondentName}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium mb-1">Complete Address</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
-                {respondentAddress}
-              </div>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5 capitalize">{respondentAddress}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium mb-1">Mobile Number</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
-                {respondentContact}
-              </div>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{respondentContact}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium mb-1">Email Address</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
-                {respondentEmail}
-              </div>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{respondentEmail}</p>
             </div>
           </div>
         </div>
 
         {/* Section 3: Witness */}
         <div className="space-y-3 pt-2">
-          <h3 className="text-base font-bold text-gray-900">Witness</h3>
+          <h3 className="text-sm py-2 font-bold uppercase text-gray-900">Witness</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-xs text-gray-400 font-medium mb-1">Full Name</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
-                {witnessName}
-              </div>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5 capitalize">{witName}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium mb-1">Complete Address</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 font-semibold text-gray-800 text-sm">
-                {witnessAddress}
-              </div>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5 capitalize">{witAddress}</p>
             </div>
           </div>
         </div>
 
-        {/* Section 4: Hearing Schedule & Decision */}
+        {/* Section 4: Hearing Schedule & Decision Details */}
         <div className="space-y-4 pt-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-base font-bold text-gray-900 mb-1">Hearing Date</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white flex items-center justify-between font-medium text-gray-800 text-sm shadow-sm">
-                <span>{hearingDate}</span>
-                <MaterialIcon name="calendar_today" className="text-gray-400 text-lg" />
-              </div>
+              <label className="block text-sm py-2 font-semibold uppercase text-gray-900 mb-1">Hearing Date</label>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{hDate}</p>
             </div>
             <div className="hidden md:block" />
 
             <div>
-              <p className="text-base font-bold text-gray-900 mb-1">Hearing Time</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white font-medium text-gray-800 text-sm shadow-sm">
-                {hearingTime}
-              </div>
+              <label className="block py-2 text-sm font-semibold uppercase text-gray-900 mb-1">Hearing Time</label>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{hTime}</p>
             </div>
 
             <div>
-              <p className="text-base font-bold text-gray-900 mb-1">Time Consumed</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white font-medium text-gray-800 text-sm shadow-sm">
-                {timeConsumed}
-              </div>
+              <label className="block py-2 text-sm font-semibold uppercase text-gray-900 mb-1">Time Consumed</label>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{hDuration}</p>
             </div>
 
             <div>
-              <p className="text-base font-bold text-gray-900 mb-1">Assign Mediator</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white flex items-center justify-between font-medium text-gray-800 text-sm shadow-sm">
-                <span>{assignedMediator}</span>
-                <MaterialIcon name="expand_more" className="text-gray-400 text-xl" />
-              </div>
+              <label className="block py-2 text-sm font-semibold uppercase text-gray-900 mb-1">Assign Mediator</label>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{hMediator}</p>
             </div>
 
             <div>
-              <p className="text-base font-bold text-gray-900 mb-1">Decision</p>
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-full bg-white flex items-center justify-between font-medium text-gray-800 text-sm shadow-sm">
-                <span>{decision}</span>
-                <MaterialIcon name="expand_more" className="text-gray-400 text-xl" />
-              </div>
+              <label className="block py-2 text-sm font-semibold uppercase text-gray-900 mb-1">Decision</label>
+              <p className="font-semibold py-2 text-gray-900 mt-0.5">{hDecision}</p>
             </div>
           </div>
 
           <div>
-            <div className="w-full p-4 border border-gray-200 rounded-2xl bg-white text-sm text-gray-800 leading-relaxed shadow-sm min-h-[100px]">
-              &ldquo;{messageNotes}&rdquo;
-            </div>
+            <label className="block py-2 text-sm font-semibold uppercase text-gray-900 mb-1">Message / Note</label>
+            <p className="font-semibold py-2 text-gray-900 mt-0.5 italic">&ldquo;{hNotes}&rdquo;</p>
           </div>
         </div>
 
-        {/* Action Buttons matching Reference Image layout */}
+        {/* Action Buttons matching progress page layout */}
         <div className="flex flex-wrap items-center justify-center gap-3 pt-4 border-t border-gray-100">
           <button
             type="button"

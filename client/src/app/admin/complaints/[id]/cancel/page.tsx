@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 import { PriorityBadge } from "@/components/admin/PriorityBadge";
 import { MaterialIcon } from "@/components/admin/MaterialIcon";
 
-export default function PendingComplaintPage({
+export default function CancelledComplaintPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -20,7 +20,6 @@ export default function PendingComplaintPage({
 
   const [complaint, setComplaint] = useState<Complaint | null>(null);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     complaintsApi
@@ -29,34 +28,6 @@ export default function PendingComplaintPage({
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [id]);
-
-  const handleApprove = async () => {
-    if (!confirm("Are you sure you want to approve this complaint?")) return;
-    setActionLoading(true);
-    try {
-      await complaintsApi.approve(id);
-      router.push(`/admin/complaints/${id}/summon`);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to approve complaint.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleCancel = async () => {
-    if (!confirm("Are you sure you want to cancel this complaint?")) return;
-    setActionLoading(true);
-    try {
-      await complaintsApi.updateStatus(id, "Cancelled");
-      router.push(`/admin/complaints/${id}/cancel`);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to cancel complaint.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -107,7 +78,7 @@ export default function PendingComplaintPage({
       {/* Top Navigation Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <PageHeader
-          title={`Pending Complaint #${complaint.complaintNo}`}
+          title={`Cancel Complaint #${complaint.complaintNo}`}
           action={
             <Link
               href="/admin/complaints"
@@ -119,13 +90,13 @@ export default function PendingComplaintPage({
         />
       </div>
 
-      {/* Overview Header */}
+      {/* Complaint Overview Card */}
       <div className="admin-card p-5 space-y-3">
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
             Complaint Overview
           </h3>
-          <StatusBadge status={complaint.status} hearingNumber={complaint.latestHearingNumber} />
+          <StatusBadge status="Cancelled" hearingNumber={complaint.latestHearingNumber} />
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 text-sm">
           <div>
@@ -149,12 +120,8 @@ export default function PendingComplaintPage({
         </div>
       </div>
 
-
-
-      {/* Main Container matching exact design from screenshot */}
+      {/* Main Details Card */}
       <div className="bg-white rounded-3xl p-6 sm:p-10 border border-gray-100 shadow-sm space-y-10">
-
-
         {/* Complainant Information */}
         <div className="space-y-6">
           <h2 className="text-xl font-bold text-gray-900 tracking-tight">
@@ -163,7 +130,7 @@ export default function PendingComplaintPage({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
             <div>
               <p className="text-xs text-gray-400 font-medium">Full Name</p>
-              <p className="text-base font-semibold text-gray-900 mt-1">
+              <p className="text-base font-semibold text-gray-900 mt-1 capitalize">
                 {complaint.complainantInfo?.name || complaint.complainant || "N/A"}
               </p>
             </div>
@@ -181,7 +148,7 @@ export default function PendingComplaintPage({
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium">Complete Address</p>
-              <p className="text-base font-semibold text-gray-900 mt-1">
+              <p className="text-base font-semibold text-gray-900 mt-1 capitalize">
                 {complaint.complainantInfo?.address || "N/A"}
               </p>
             </div>
@@ -197,14 +164,14 @@ export default function PendingComplaintPage({
         </div>
 
         {/* Respondent Information */}
-        <div className="space-y-6 pt-2">
+        <div className="space-y-6 pt-2 border-t border-gray-100">
           <h2 className="text-xl font-bold text-gray-900 tracking-tight">
             Respondent Information
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
             <div>
               <p className="text-xs text-gray-400 font-medium">Full Name</p>
-              <p className="text-base font-semibold text-gray-900 mt-1">
+              <p className="text-base font-semibold text-gray-900 mt-1 capitalize">
                 {complaint.respondentInfo?.name || complaint.respondent || "N/A"}
               </p>
             </div>
@@ -222,7 +189,7 @@ export default function PendingComplaintPage({
             </div>
             <div>
               <p className="text-xs text-gray-400 font-medium">Complete Address</p>
-              <p className="text-base font-semibold text-gray-900 mt-1">
+              <p className="text-base font-semibold text-gray-900 mt-1 capitalize">
                 {complaint.respondentInfo?.address || "N/A"}
               </p>
             </div>
@@ -238,7 +205,7 @@ export default function PendingComplaintPage({
         </div>
 
         {/* Complaint Details */}
-        <div className="space-y-6">
+        <div className="space-y-6 border-t border-gray-100 pt-6">
           <h2 className="text-xl font-bold text-gray-900 tracking-tight">
             Complaint Details
           </h2>
@@ -274,7 +241,7 @@ export default function PendingComplaintPage({
         </div>
 
         {/* Complaint Evidence */}
-        <div className="space-y-6">
+        <div className="space-y-6 border-t border-gray-100 pt-6">
           <h2 className="text-xl font-bold text-gray-900 tracking-tight">
             Complaint Evidence
           </h2>
@@ -324,33 +291,13 @@ export default function PendingComplaintPage({
           <button
             type="button"
             onClick={() => router.push("/admin/complaints")}
-            disabled={actionLoading}
-            className="px-6 py-2.5 rounded-full border border-gray-300 font-semibold text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm flex items-center gap-2 text-sm cursor-pointer disabled:opacity-50"
+            className="px-6 py-2.5 rounded-full border border-gray-300 font-semibold text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm flex items-center gap-2 text-sm cursor-pointer"
           >
             <MaterialIcon name="arrow_back" className="text-lg" />
             BACK
-          </button>
-          <button
-            type="button"
-            onClick={handleCancel}
-            disabled={actionLoading}
-            className="px-6 py-2.5 rounded-full bg-red-600 hover:bg-red-700 font-semibold text-white transition shadow-sm flex items-center gap-2 text-sm cursor-pointer disabled:opacity-50"
-          >
-            <MaterialIcon name="cancel" className="text-lg" />
-            CANCEL
-          </button>
-          <button
-            type="button"
-            onClick={handleApprove}
-            disabled={actionLoading}
-            className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 font-semibold text-white transition shadow-sm flex items-center gap-2 text-sm cursor-pointer disabled:opacity-50"
-          >
-            <MaterialIcon name="check_circle" className="text-lg" />
-            APPROVE
           </button>
         </div>
       </div>
     </div>
   );
 }
-
