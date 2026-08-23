@@ -117,7 +117,7 @@ export default function HearingStagePage({
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
       <PageHeader
-        title={`${stageTitles[stageNumber]} — Complaint #${complaint.complaintNo}`}
+        title={``}
         action={
           <button
             type="button"
@@ -161,7 +161,7 @@ export default function HearingStagePage({
 
       {/* Main Hearing Display Form with Progress Page CSS Styling */}
       <div className="admin-card p-6 md:p-8 bg-white space-y-6 border border-gray-200 shadow-sm rounded-2xl">
-        
+
         {/* Section 1: Complainant Information */}
         <div className="space-y-3 pt-2">
           <h3 className="text-sm py-2 font-bold uppercase text-gray-900">Complainant Information</h3>

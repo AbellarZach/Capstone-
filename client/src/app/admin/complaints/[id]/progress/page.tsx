@@ -204,7 +204,7 @@ export default function ComplaintProgressPage({
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
-        title={`Progress ${stageNumber} — Complaint #${complaint.complaintNo}`}
+        title={``}
         action={
           <button
             type="button"

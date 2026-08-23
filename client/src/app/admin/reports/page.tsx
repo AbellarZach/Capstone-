@@ -18,7 +18,10 @@ import { MaterialIcon } from "@/components/admin/MaterialIcon";
 export default function ReportsPage() {
   return (
     <div className="space-y-6">
-      <PageHeader title="Reports" />
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
+        <p className="mt-1 text-gray-500">Generate and view reports</p>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <GlassStatCard

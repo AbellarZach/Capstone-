@@ -60,7 +60,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="mt-1 text-gray-500">Welcome back, Administrator</p>
       </div>

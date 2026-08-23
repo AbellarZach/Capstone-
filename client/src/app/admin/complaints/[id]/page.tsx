@@ -35,8 +35,10 @@ export default function ComplaintDetailRedirect({
             router.replace(`/admin/complaints/${id}/hearing/${stage}`);
             break;
           case "Resolved":
+            router.replace(`/admin/complaints/${id}/resolve/${stage}`);
+            break;
           case "Unsettled":
-            router.replace(`/admin/complaints/${id}/progress`);
+            router.replace(`/admin/complaints/${id}/unsettled`);
             break;
           case "Cancelled":
             router.replace(`/admin/complaints/${id}/cancel`);

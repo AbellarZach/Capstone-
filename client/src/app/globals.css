@@ -42,8 +42,16 @@ body {
   border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
+.admin-search {
+  max-width: var(--content-max-width);
+  background: white;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
 .admin-table-wrap {
   overflow-x: auto;
+
 }
 
 .admin-table {
@@ -174,12 +182,10 @@ body {
 }
 
 .glass-card {
-  background: linear-gradient(
-    135deg,
-    rgba(5, 117, 255, 0.12) 0%,
-    rgba(255, 255, 255, 0.85) 50%,
-    rgba(255, 255, 255, 0.95) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(5, 117, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.85) 50%,
+      rgba(255, 255, 255, 0.95) 100%);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 4px 24px rgba(5, 117, 255, 0.08);
@@ -204,6 +210,7 @@ body {
   from {
     transform: translateX(100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -217,6 +224,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }

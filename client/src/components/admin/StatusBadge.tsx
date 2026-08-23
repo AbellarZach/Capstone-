@@ -11,14 +11,14 @@ export function StatusBadge({ status, hearingNumber }: StatusBadgeProps) {
 
   if (normalized === "Scheduled") {
     let label = `Scheduled ${Math.min(stage, 3)}`;
-    let style = "bg-indigo-100 text-indigo-800 ring-1 ring-indigo-300";
+    let style = "bg-purple-100 text-purple-800 ring-1 ring-purple-300";
 
     if (stage === 2) {
       label = "Scheduled 2";
       style = "bg-purple-100 text-purple-800 ring-1 ring-purple-300";
     } else if (stage >= 3) {
       label = "Scheduled 3";
-      style = "bg-teal-100 text-teal-800 ring-1 ring-teal-300";
+      style = "bg-purple-100 text-purple-800 ring-1 ring-purple-300";
     }
 
     return (
@@ -33,9 +33,9 @@ export function StatusBadge({ status, hearingNumber }: StatusBadgeProps) {
   if (normalized === "In Progress") {
     const label = `In Progress ${stage}`;
     let style = "bg-blue-100 text-blue-800 ring-1 ring-blue-300";
-    if (stage === 2) style = "bg-cyan-100 text-cyan-800 ring-1 ring-cyan-300";
-    if (stage === 3) style = "bg-sky-100 text-sky-800 ring-1 ring-sky-300";
-    if (stage === 4) style = "bg-sky-200 text-sky-900 ring-1 ring-sky-400";
+    if (stage === 2) style = "bg-blue-100 text-blue-800 ring-1 ring-blue-300";
+    if (stage === 3) style = "bg-blue-100 text-blue-800 ring-1 ring-blue-300";
+    if (stage === 4) style = "bg-blue-100 text-blue-800 ring-1 ring-blue-300";
 
     return (
       <span
@@ -69,7 +69,7 @@ export function StatusBadge({ status, hearingNumber }: StatusBadgeProps) {
       style = "bg-red-100 text-red-800 ring-1 ring-red-300";
       break;
     case "Unsettled":
-      style = "bg-slate-800 text-slate-100 ring-1 ring-slate-900";
+      style = "bg-red-100 text-red-800 ring-1 ring-red-300";
       break;
   }
 
