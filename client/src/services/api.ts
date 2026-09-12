@@ -78,18 +78,73 @@ export interface DashboardData {
   monthlyAnalytics: MonthlyAnalytics[];
 }
 
+export interface ReportFilters {
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  priority?: string;
+  category?: string;
+  search?: string;
+  year?: number | string;
+  month?: number | string;
+}
+
+export interface HearingAnalytics {
+  totalHearings: number;
+  complaintsWithHearings: number;
+  avgHearingsPerCase: number;
+  hearingsByStage: {
+    stageNumber: number;
+    stage: string;
+    count: number;
+  }[];
+  hearingsByMediator: {
+    mediator: string;
+    count: number;
+  }[];
+}
+
+export interface CategoryPerformanceItem {
+  category: string;
+  total: number;
+  resolved: number;
+  inProgress: number;
+  unsettled: number;
+  rate: number;
+  avgDays: number;
+}
+
+export interface SlaCompliance {
+  totalCases: number;
+  within15Days: number;
+  within30Days: number;
+  over30Days: number;
+  activeOverdue: number;
+  complianceRate: number;
+}
+
 export interface ReportsData {
   stats: {
     totalComplaints: number;
     resolvedCases: number;
     pendingCases: number;
+    inProgressCases: number;
+    scheduledCases: number;
+    cancelledCases: number;
+    unsettledCases: number;
     avgResolutionTime: number;
     resolvedRate: number;
     activeCases: number;
   };
+  statusCounts: Record<string, number>;
   monthlyAnalytics: MonthlyAnalytics[];
   categoryReports: { category: string; total: number }[];
   priorityReports: { priority: string; cases: number }[];
+  hearingAnalytics: HearingAnalytics;
+  categoryPerformance: CategoryPerformanceItem[];
+  slaCompliance: SlaCompliance;
+  complaints: Complaint[];
+  filters: ReportFilters;
 }
 
 export interface Summon {
@@ -172,7 +227,21 @@ export const summonsApi = {
 };
 
 export const reportsApi = {
-  getAll: () => api.get<ReportsData>("/api/reports").then((r) => r.data),
+  getAll: (filters?: ReportFilters) => {
+    const params = new URLSearchParams();
+    if (filters?.startDate) params.append("startDate", filters.startDate);
+    if (filters?.endDate) params.append("endDate", filters.endDate);
+    if (filters?.status && filters.status !== "All") params.append("status", filters.status);
+    if (filters?.priority && filters.priority !== "All") params.append("priority", filters.priority);
+    if (filters?.category && filters.category !== "All") params.append("category", filters.category);
+    if (filters?.search) params.append("search", filters.search);
+    if (filters?.year) params.append("year", String(filters.year));
+    if (filters?.month) params.append("month", String(filters.month));
+    const query = params.toString();
+    return api
+      .get<ReportsData>(`/api/reports${query ? `?${query}` : ""}`)
+      .then((r) => r.data);
+  },
 };
 
 export const clientApi = {
@@ -250,3 +319,4 @@ export const residentsApi = {
 };
 
 export default api;
+
