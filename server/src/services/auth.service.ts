@@ -3,6 +3,7 @@ import prisma from "../config/prisma";
 import { RegisterDto, LoginDto, AuthUser } from "../types/auth.types";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt";
 import { generateRandomToken } from "../utils/token";
+import { sendPasswordResetEmail } from "../utils/mailer";
 import { normalizeEmail, normalizeFullName, normalizePhone } from "../utils/residentMatch";
 import { TokenType } from "@prisma/client";
 
@@ -281,6 +282,18 @@ export class AuthService {
       return { message: "If account exists, password reset instructions have been sent." };
     }
 
+    // I-revoke ang mga lumang hindi pa nagagamit na reset tokens para iwas spam
+    await prisma.token.updateMany({
+      where: {
+        userId: user.id,
+        type: TokenType.PASSWORD_RESET,
+        consumedAt: null,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      data: { revokedAt: new Date() },
+    });
+
     const resetToken = generateRandomToken();
     await prisma.token.create({
       data: {
@@ -290,6 +303,17 @@ export class AuthService {
         expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
       },
     });
+
+    const clientUrl = (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
+    const resetLink = `${clientUrl}/reset-password?token=${resetToken}`;
+
+    try {
+      await sendPasswordResetEmail(email, resetLink);
+    } catch (err) {
+      // Huwag i-expose ang mail error sa client para iwas user enumeration,
+      // pero i-log para makita sa server logs.
+      console.error("[forgotPassword] failed to send reset email:", err);
+    }
 
     return {
       message: "If account exists, password reset instructions have been sent.",
