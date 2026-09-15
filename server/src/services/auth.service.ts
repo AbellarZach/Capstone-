@@ -3,6 +3,7 @@ import prisma from "../config/prisma";
 import { RegisterDto, LoginDto, AuthUser } from "../types/auth.types";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt";
 import { generateRandomToken } from "../utils/token";
+import { normalizeEmail, normalizeFullName, normalizePhone } from "../utils/residentMatch";
 import { TokenType } from "@prisma/client";
 
 function toAuthUser(user: any): AuthUser {
@@ -19,17 +20,59 @@ function toAuthUser(user: any): AuthUser {
 
 export class AuthService {
   static async register(dto: RegisterDto) {
-    const email = dto.email.trim().toLowerCase();
-    const username = dto.username.trim();
-    const phoneNumber = dto.phoneNumber?.trim() || null;
+    const fullname = String(dto.fullname ?? "").trim();
+    const email = normalizeEmail(dto.email ?? "");
+    const username = String(dto.username ?? "").trim();
+    const phoneNumber = String(dto.phoneNumber ?? "").trim();
     const password = dto.password;
+    // Any frontend-supplied residentId/userId is deliberately ignored:
+    // identity must be proven via Full Name + Email + Phone.
 
-    if (!email || !username || !password) {
-      throw new Error("Email, username, and password are required");
+    if (!fullname || !email || !username || !phoneNumber || !password) {
+      throw new Error("Full name, email, phone number, username, and password are required");
     }
 
     if (password.length < 8) {
       throw new Error("Password must be at least 8 characters");
+    }
+
+    const normName = normalizeFullName(fullname);
+    const normPhone = normalizePhone(phoneNumber);
+    if (!normPhone) {
+      throw new Error("Phone number is not valid");
+    }
+
+    // Exact match: ONE resident where normalized Full Name + Email + Phone
+    // all point to the SAME record. Username, password and address are
+    // never used for matching.
+    const residents = await prisma.resident.findMany({
+      include: { user: { select: { id: true } } },
+    });
+    const matches = residents.filter((r) => {
+      const residentPhone = normalizePhone(r.contactNumber ?? "");
+      return (
+        normalizeFullName(r.fullName ?? "") === normName &&
+        normalizeEmail(r.email ?? "") === email &&
+        residentPhone !== "" &&
+        residentPhone === normPhone
+      );
+    });
+
+    if (matches.length === 0) {
+      throw new Error(
+        "Your information could not be verified. Please make sure your name, email, and contact number match the information registered with the barangay."
+      );
+    }
+
+    if (matches.length > 1) {
+      throw new Error(
+        "Multiple resident records match your information. Please contact the barangay for verification."
+      );
+    }
+
+    const matched = matches[0];
+    if (matched.user) {
+      throw new Error("This resident is already registered. You cannot create another account.");
     }
 
     // Check duplicate email
@@ -45,43 +88,58 @@ export class AuthService {
     }
 
     // Check duplicate phone number
-    if (phoneNumber) {
-      const existingPhone = await prisma.user.findUnique({ where: { phoneNumber } });
-      if (existingPhone) {
-        throw new Error("Phone number is already registered");
-      }
+    const existingPhone = await prisma.user.findUnique({
+      where: { phoneNumber },
+    });
+    if (existingPhone) {
+      throw new Error("Phone number is already registered");
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user with STRICTLY FORCED role = RESIDENT
-    const user = await prisma.user.create({
-      data: {
-        email,
-        username,
-        fullname: dto.fullname || null,
-        phoneNumber,
-        password: passwordHash,
-        role: "RESIDENT",
-        isVerified: false,
-      },
-    });
+    // Atomic: create the User and link it to the verified Resident.
+    // The UNIQUE constraint on users.resident_id is the database-level
+    // guard against double-linking (mapped as P2002 below).
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        // Create user with STRICTLY FORCED role = RESIDENT
+        const user = await tx.user.create({
+          data: {
+            email,
+            username,
+            fullname,
+            phoneNumber,
+            password: passwordHash,
+            role: "RESIDENT",
+            isVerified: false,
+            resident: { connect: { id: matched.id } },
+          },
+        });
 
-    // Create email verification token
-    const verifyToken = generateRandomToken();
-    await prisma.token.create({
-      data: {
-        type: TokenType.EMAIL_VERIFY,
-        token: verifyToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-      },
-    });
+        // Create email verification token
+        const verifyToken = generateRandomToken();
+        await tx.token.create({
+          data: {
+            type: TokenType.EMAIL_VERIFY,
+            token: verifyToken,
+            userId: user.id,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+          },
+        });
 
-    return {
-      user: toAuthUser(user),
-      verifyToken,
-    };
+        return { user, verifyToken };
+      });
+
+      return {
+        user: toAuthUser(result.user),
+        verifyToken: result.verifyToken,
+      };
+    } catch (err: any) {
+      if (err?.code === "P2002") {
+        throw new Error("This resident is already registered. You cannot create another account.");
+      }
+      throw err;
+    }
   }
 
   static async login(dto: LoginDto) {

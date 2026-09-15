@@ -11,6 +11,7 @@ export default function SignupPage() {
 
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
+  const [fullname, setFullname] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -19,7 +20,7 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [ error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const handleSignup = async (e: FormEvent) => {
@@ -28,7 +29,7 @@ export default function SignupPage() {
     setSuccess(null);
 
     // Frontend validations
-    if (!email.trim() || !username.trim() || !password) {
+    if (!fullname.trim() || !email.trim() || !username.trim() || !phoneNumber.trim() || !password) {
       setError("Please fill out all required fields.");
       return;
     }
@@ -47,10 +48,13 @@ export default function SignupPage() {
 
     try {
       // Role is NEVER sent in registration payload; backend strictly enforces RESIDENT
+      // residentId is NEVER sent either: the backend verifies identity via
+      // Full Name + Email + Phone against the barangay resident records.
       const response = await authApi.register({
         email: email.trim(),
         username: username.trim(),
-        phoneNumber: phoneNumber.trim() || undefined,
+        fullname: fullname.trim(),
+        phoneNumber: phoneNumber.trim(),
         password,
       });
 
@@ -98,6 +102,24 @@ export default function SignupPage() {
           <form onSubmit={handleSignup} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={fullname}
+                onChange={(e) => setFullname(e.target.value)}
+                placeholder="Juan Dela Cruz"
+                className="w-full px-4 py-2.5 bg-[#f8f9fa] border border-gray-200 rounded-xl capitalize text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-gray-900"
+                disabled={loading}
+                required
+              />
+              <p className="mt-1 text-[11px] text-gray-400">
+                Must exactly match the name registered with the barangay.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
                 Email Address
               </label>
               <input
@@ -137,6 +159,7 @@ export default function SignupPage() {
                 placeholder="09123456789"
                 className="w-full px-4 py-2.5 bg-[#f8f9fa] border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-gray-900"
                 disabled={loading}
+                required
               />
             </div>
 

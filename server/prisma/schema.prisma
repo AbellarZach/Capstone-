@@ -31,6 +31,12 @@ model User {
   tokens       Token[]
   activityLogs ActivityLog[]
 
+  // 1 Resident -> max 1 User. Maps the existing nullable UNIQUE
+  // users.resident_id FK -> residents(id) ON DELETE SET NULL in Neon.
+  // Schema-only change: no DB migration required, no data touched.
+  residentId Int?      @unique @map("resident_id")
+  resident   Resident? @relation(fields: [residentId], references: [id], onDelete: SetNull)
+
   @@map("users")
 }
 
@@ -54,16 +60,35 @@ model Resident {
   id               Int       @id @default(autoincrement())
   residentId       String    @unique @map("resident_id") @db.VarChar(20)
   fullName         String    @map("full_name") @db.VarChar(255)
+  firstName        String?   @map("first_name") @db.VarChar(100)
+  middleName       String?   @map("middle_name") @db.VarChar(100)
+  lastName         String?   @map("last_name") @db.VarChar(100)
+  suffix           String?   @db.VarChar(10)
   birthdate        DateTime? @db.Date
+  birthPlace       String?   @map("birth_place")
   age              Int?
   gender           String?   @db.VarChar(20)
   civilStatus      String?   @map("civil_status") @db.VarChar(50)
+  nationality      String?   @db.VarChar(100)
+  religion         String?   @db.VarChar(100)
+  occupation       String?   @db.VarChar(150)
   address          String?
   contactNumber    String?   @map("contact_number") @db.VarChar(20)
   email            String?   @db.VarChar(255)
+  pwdIdNo          String?   @map("pwd_id_no") @db.VarChar(50)
+  familyMonthlyIncome String? @map("family_monthly_income") @db.VarChar(50)
+  indigent         String?   @db.VarChar(10)
+  registeredVoter  String?   @map("registered_voter") @db.VarChar(10)
+  precinctNo       String?   @map("precinct_no") @db.VarChar(50)
+  voterIdNo        String?   @map("voter_id_no") @db.VarChar(50)
+  photoUrl         String?   @map("photo_url")
   householdNumber  String?   @map("household_number") @db.VarChar(50)
   emergencyContact String?   @map("emergency_contact") @db.VarChar(255)
   createdAt        DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Back-relation for the 1-1 User <-> Resident link (FK lives on users.resident_id).
+  // Registration status derives from this relation: user == null -> NOT REGISTERED.
+  user User?
 
   @@map("residents")
 }

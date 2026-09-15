@@ -30,14 +30,37 @@ async function getProfile(req, res) {
          full_name AS "fullname",
          phone_number AS "phoneNumber",
          is_verified AS "isVerified",
-         profile_picture AS "profilePicture"
+         profile_picture AS "profilePicture",
+         resident_id AS "residentId"
        FROM users
        WHERE id = $1`,
       [req.user.id]
     );
 
     if (!rows[0]) return res.status(404).json({ message: "User not found" });
-    res.json(mapProfile(rows[0]));
+    const profile = mapProfile(rows[0]);
+
+    // Attach the linked Resident's current information when present.
+    if (rows[0].residentId) {
+      const residentResult = await pool.query(
+        `SELECT id, resident_id, full_name, email, contact_number, address, age
+         FROM residents WHERE id = $1`,
+        [rows[0].residentId]
+      );
+      const r = residentResult.rows[0];
+      if (r) {
+        profile.linkedResident = {
+          id: r.resident_id,
+          fullName: r.full_name,
+          email: r.email,
+          contactNumber: r.contact_number,
+          address: r.address,
+          age: r.age,
+        };
+      }
+    }
+
+    res.json(profile);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -245,16 +268,40 @@ async function createComplaint(req, res) {
     }
 
     const userResult = await pool.query(
-      `SELECT id, email, full_name, phone_number, username
+      `SELECT id, email, full_name, phone_number, username, resident_id
        FROM users WHERE id = $1`,
       [req.user.id]
     );
     const dbUser = userResult.rows[0];
     if (!dbUser) return res.status(401).json({ message: "Unauthorized" });
 
+    // Prefer the linked Resident's CURRENT information (barangay record is
+    // the source of truth). Read live so future complaints always use the
+    // latest data after barangay updates. Fall back to the User row when
+    // no resident is linked (e.g. accounts created before verification).
+    let linkedResident = null;
+    if (dbUser.resident_id) {
+      const residentResult = await pool.query(
+        `SELECT full_name, email, contact_number, address, age
+         FROM residents WHERE id = $1`,
+        [dbUser.resident_id]
+      );
+      linkedResident = residentResult.rows[0] || null;
+    }
+
     const complainantName =
-      dbUser.full_name || req.user.fullname || dbUser.username || dbUser.email;
-    const complainantContact = dbUser.phone_number || null;
+      linkedResident?.full_name ||
+      dbUser.full_name ||
+      req.user.fullname ||
+      dbUser.username ||
+      dbUser.email;
+    const complainantEmail = linkedResident?.email || dbUser.email;
+    const complainantContact = linkedResident?.contact_number || dbUser.phone_number || null;
+    const complainantAddress = linkedResident?.address || null;
+    const complainantAge =
+      linkedResident?.age !== null && linkedResident?.age !== undefined
+        ? linkedResident.age
+        : null;
     const complaintNo = await generateComplaintNo();
 
     const uploadedEvidence = Array.isArray(req.files)
@@ -296,10 +343,10 @@ async function createComplaint(req, res) {
           description || "",
           evidenceJson,
           complainantName,
-          dbUser.email,
-          null,
+          complainantEmail,
+          complainantAddress,
           complainantContact,
-          null,
+          complainantAge,
           respondentName,
           respondentAddress || null,
           respondentContact || null,
@@ -330,10 +377,10 @@ async function createComplaint(req, res) {
             description || "",
             evidenceJson,
             complainantName,
-            dbUser.email,
-            null,
+            complainantEmail,
+            complainantAddress,
             complainantContact,
-            null,
+            complainantAge,
             respondentName,
             respondentAddress || null,
             respondentContact || null,

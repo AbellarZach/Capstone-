@@ -22,7 +22,8 @@ api.interceptors.request.use((config) => {
 export interface RegisterRequest {
   email: string;
   username: string;
-  phoneNumber?: string;
+  fullname: string;
+  phoneNumber: string;
   password?: string;
 }
 

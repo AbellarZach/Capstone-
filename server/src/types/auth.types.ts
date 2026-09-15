@@ -3,9 +3,13 @@ import { Request } from "express";
 export interface RegisterDto {
   email: string;
   username: string;
-  phoneNumber?: string;
+  fullname: string;
+  phoneNumber: string;
   password?: string;
-  fullname?: string;
+  // NOTE: residentId/userId from the frontend is never trusted for
+  // resident matching. The backend verifies Full Name + Email + Phone.
+  residentId?: unknown;
+  userId?: unknown;
 }
 
 export interface LoginDto {

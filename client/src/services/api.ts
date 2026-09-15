@@ -316,7 +316,22 @@ export const residentsApi = {
   update: (id: string, data: Partial<Resident>) =>
     api.put<Resident>(`/api/residents/${id}`, data).then((r) => r.data),
   remove: (id: string) => api.delete(`/api/residents/${id}`).then((r) => r.data),
+  uploadPhoto: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append("photo", file);
+    return api
+      .post<Resident>(`/api/residents/${id}/photo`, formData)
+      .then((r) => r.data);
+  },
 };
+
+// Resolves a stored upload path (e.g. "/uploads/residents/x.jpg") to a
+// URL the browser can load. Blob previews and absolute URLs pass through.
+export function uploadImageUrl(path?: string): string {
+  if (!path) return "";
+  if (/^(blob:|data:|https?:\/\/)/.test(path)) return path;
+  return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
+}
 
 export default api;
 

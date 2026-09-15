@@ -5,8 +5,9 @@ const multer = require("multer");
 const uploadsRoot = path.join(__dirname, "..", "uploads");
 const profileDir = path.join(uploadsRoot, "profiles");
 const evidenceDir = path.join(uploadsRoot, "evidence");
+const residentsDir = path.join(uploadsRoot, "residents");
 
-for (const dir of [uploadsRoot, profileDir, evidenceDir]) {
+for (const dir of [uploadsRoot, profileDir, evidenceDir, residentsDir]) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
@@ -41,8 +42,15 @@ const uploadEvidence = multer({
   limits: { fileSize: 8 * 1024 * 1024, files: 8 },
 }).array("evidence", 8);
 
+const uploadResidentPhoto = multer({
+  storage: makeStorage(residentsDir),
+  fileFilter: imageFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
+}).single("photo");
+
 module.exports = {
   uploadsRoot,
   uploadProfile,
   uploadEvidence,
+  uploadResidentPhoto,
 };

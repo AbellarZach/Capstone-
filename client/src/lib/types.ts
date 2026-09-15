@@ -86,6 +86,11 @@ export interface Resident {
   householdNumber?: string;
   emergencyContact?: string;
   dateRegistered?: string;
+  // Account registration status, derived from the User <-> Resident
+  // relationship (linked user => REGISTERED). Separate from
+  // registeredVoter, which tracks barangay voter records.
+  userId?: number | null;
+  isRegistered?: boolean;
 }
 
 export interface Notification {
