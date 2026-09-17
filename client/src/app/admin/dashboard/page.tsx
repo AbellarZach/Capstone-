@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { complaintsApi } from "@/services/api";
 import type { Complaint, MonthlyAnalytics } from "@/lib/types";
+import { getTargetRoute } from "@/lib/complaint-utils";
 import { GlassStatCard } from "@/components/admin/GlassStatCard";
 import { StatusOverview } from "@/components/admin/StatusOverview";
 import { MonthlyChart } from "@/components/admin/MonthlyChart";
@@ -168,7 +169,7 @@ export default function AdminDashboard() {
                   <td className="text-gray-600">{c.dateFiled}</td>
                   <td>
                     <Link
-                      href={`/admin/complaints/${c.id}`}
+                      href={getTargetRoute(c)}
                       className="btn btn-primary btn-sm"
                     >
                       View

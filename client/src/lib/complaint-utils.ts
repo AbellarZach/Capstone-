@@ -94,3 +94,49 @@ export const CLIENT_PROGRESS_STEPS: ClientProgressStep[] = [
   "In Progress",
   "Resolved",
 ];
+
+export const COMPLAINT_CATEGORIES = [
+  "Noise Disturbance",
+  "Boundary or Property Dispute",
+  "Unpaid Debt or Obligation",
+  "Physical Altercation",
+  "Threat or Harassment",
+  "Animal or Livestock Nuisance",
+  "Garbage and Sanitation",
+  "Damage to Property",
+  "Other Barangay Matter",
+] as const;
+
+export type ComplaintCategory = (typeof COMPLAINT_CATEGORIES)[number];
+
+export function getTargetRoute(c: {
+  id?: string | number;
+  _id?: string | number;
+  status?: string;
+  latestHearingNumber?: number;
+}): string {
+  const id = c.id ?? c._id ?? "";
+  const normStatus = normalizeStatus(c.status || "");
+  const stage =
+    c.latestHearingNumber && c.latestHearingNumber > 0
+      ? c.latestHearingNumber
+      : 1;
+
+  switch (normStatus) {
+    case "Pending":
+      return `/admin/complaints/${id}/pending`;
+    case "In Progress":
+      return `/admin/complaints/${id}/progress/${stage}`;
+    case "Scheduled":
+      return `/admin/complaints/${id}/hearing/${stage}`;
+    case "Resolved":
+      return `/admin/complaints/${id}/resolve/${stage}`;
+    case "Unsettled":
+      return `/admin/complaints/${id}/unsettled`;
+    case "Cancelled":
+      return `/admin/complaints/${id}/cancel`;
+    default:
+      return `/admin/complaints/${id}/pending`;
+  }
+}
+

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { complaintsApi } from "@/services/api";
 import type { Complaint } from "@/lib/types";
-import { normalizeStatus } from "@/lib/complaint-utils";
+import { normalizeStatus, getTargetRoute } from "@/lib/complaint-utils";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { PriorityBadge } from "@/components/admin/PriorityBadge";
 import { MaterialIcon } from "@/components/admin/MaterialIcon";
@@ -63,27 +63,6 @@ export default function ManageComplaintsPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const getTargetRoute = (c: Complaint) => {
-    const normStatus = normalizeStatus(c.status);
-    const stage = c.latestHearingNumber && c.latestHearingNumber > 0 ? c.latestHearingNumber : 1;
-
-    switch (normStatus) {
-      case "Pending":
-        return `/admin/complaints/${c.id}/pending`;
-      case "In Progress":
-        return `/admin/complaints/${c.id}/progress/${stage}`;
-      case "Scheduled":
-        return `/admin/complaints/${c.id}/hearing/${stage}`;
-      case "Resolved":
-        return `/admin/complaints/${c.id}/resolve/${stage}`;
-      case "Unsettled":
-        return `/admin/complaints/${c.id}/unsettled`;
-      case "Cancelled":
-        return `/admin/complaints/${c.id}/cancel`;
-      default:
-        return `/admin/complaints/${c.id}/progress/${stage}`;
-    }
-  };
 
   return (
     <div className="space-y-6">
