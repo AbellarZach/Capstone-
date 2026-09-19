@@ -46,7 +46,6 @@ export default function KpForm9() {
           </div>
         </div>
         <p className="kp-case-vs">-against-</p>
-        /
         <Line className="kp-w-40" />
         <div className="kp-case-left">
           <Line className="kp-w-40" />
@@ -85,7 +84,8 @@ export default function KpForm9() {
           complainant/s.
         </p>
       </div>
-
+      <br>
+      </br>
       {/* Body paragraph 2 */}
       <div className="kp-body-text kp-mt">
         <p>
@@ -94,12 +94,14 @@ export default function KpForm9() {
           counterclaim arising from said complaint.
         </p>
       </div>
-
+      <br>
+      </br>
       {/* Fail not warning */}
       <p className="kp-mt kp-center">
         FAIL NOT or else face punishment as for contempt of court.
       </p>
-
+      <br>
+      </br>
       {/* Date */}
       <p className="kp-mt kp-indent">
         This <Line className="kp-w-10" /> day of <Line className="kp-w-30" />, 20<Line className="kp-w-05" />.
@@ -108,8 +110,8 @@ export default function KpForm9() {
       {/* Chairman signature */}
       <div className="kp-sig-block kp-sig-right kp-mt-lg">
         <div className="kp-sig-wrap">
-          <Line className="kp-w-40" />
           <p className="kp-sig-label">NICOLAS C. ANTIPUESTO</p>
+          <Line className="kp-w-40" />
           <p className="kp-sig-sublabel">Punong Barangay /Lupon Chairman</p>
         </div>
       </div>

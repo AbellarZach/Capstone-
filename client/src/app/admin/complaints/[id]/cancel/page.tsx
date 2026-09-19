@@ -75,8 +75,8 @@ export default function CancelledComplaintPage({
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
-      {/* Top Navigation Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* Top Navigation Bar (screen only) */}
+      <div className="no-print flex flex-wrap items-center justify-between gap-4">
         <PageHeader
           title={`Cancel Complaint #${complaint.complaintNo}`}
           action={
@@ -89,6 +89,18 @@ export default function CancelledComplaintPage({
           }
         />
       </div>
+
+      <div className="printable-content space-y-6">
+        {/* Print-only document header (hidden on screen) */}
+        <div className="print-only">
+          <h1 style={{ fontSize: "18pt", fontWeight: 700 }}>
+            Cancelled Complaint #{complaint.complaintNo}
+          </h1>
+          <p style={{ fontSize: "10pt", color: "#333" }}>
+            Date Filed: {complaint.dateFiled} · Category: {complaint.category} ·
+            Priority: {complaint.priority}
+          </p>
+        </div>
 
       {/* Complaint Overview Card */}
       <div className="admin-card p-5 space-y-3">
@@ -286,8 +298,8 @@ export default function CancelledComplaintPage({
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center justify-end gap-3 pt-6 border-t border-gray-100">
+        {/* Action Buttons (screen only, hidden in print output) */}
+        <div className="no-print flex flex-wrap items-center justify-end gap-3 pt-6 border-t border-gray-100">
           <button
             type="button"
             onClick={() => router.push("/admin/complaints")}
@@ -297,6 +309,7 @@ export default function CancelledComplaintPage({
             BACK
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

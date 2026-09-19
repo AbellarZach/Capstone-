@@ -45,25 +45,17 @@ export default function KpForm9Back() {
 
       {/* 4 modes of service */}
       <div className="kp-service-modes">
-        <p>
           <Line className="kp-w-15" /><span className="kp-service-num">1. </span>{" "} 
           <div className="kp-p">handing to him/them said summons and person.<br></br>or</div>
-        </p>
-        <p>
           <Line className="kp-w-15" /><span className="kp-service-num">2.</span>{" "}
           <div className="kp-p">handing to him/them said summons and he/they<br></br> refused to serve it, or</div>
-        </p>
-        <p>
           <Line className="kp-w-15" /><span className="kp-service-num">3.</span>{" "}
           <div className="kp-p">leaving said summons at his/her dwelling <br></br> with <Line className="kp-w-30"/> <br></br> 
           a person of suitable age and discretion residing <br></br> therein, or</div>
-        </p>
-        <p>
           <Line className="kp-w-15" /><span className="kp-service-num">4.</span>{" "}
           <div className="kp-p">leaving said summons at his/her office/place of <br></br> business with{" "}
           <Line className="kp-w-30" /> <br></br> a competent person in charge
           thereof</div>
-        </p>
       </div>
       <br>
       </br>
@@ -71,7 +63,7 @@ export default function KpForm9Back() {
       {/* Officer signature */}
       <div className="kp-sig-block kp-sig-right kp-mt-lg">
         <Line className="kp-w-30" />
-        <p className="kp-sig-label">Officer</p>
+        <p className="kp-sig-label1">Officer</p>
       </div>
 
       {/* Received by respondent */}

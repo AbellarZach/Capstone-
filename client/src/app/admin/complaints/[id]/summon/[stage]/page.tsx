@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { hearingsApi } from "@/services/api";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { MaterialIcon } from "@/components/admin/MaterialIcon";
+import { PrintButton } from "@/components/admin/PrintButton";
 import SummonPaper from "@/components/admin/summon/SummonPaper";
 
 export default function StageSummonFormPage({
@@ -45,10 +46,6 @@ export default function StageSummonFormPage({
     initSummon();
   }, [initSummon]);
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const handleBack = async () => {
     try {
       await hearingsApi.save({
@@ -72,7 +69,7 @@ export default function StageSummonFormPage({
   }
 
   return (
-    <div className="space-y-5 max-w-4xl mx-auto">
+    <div className="summon-page-root printable-content space-y-5 max-w-4xl mx-auto">
       {/* Header controls (Hidden on print) */}
       <div className="no-print">
         <PageHeader
@@ -90,10 +87,7 @@ export default function StageSummonFormPage({
       </div>
 
       {/* Printable Summon Container Area */}
-      <div
-        id="summon-print-area"
-        className="admin-card p-8 bg-white border border-gray-300 rounded-xl shadow-sm print:border-none print:shadow-none print:p-0 print:m-0"
-      >
+      <div>
         <SummonPaper />
       </div>
 
@@ -107,14 +101,7 @@ export default function StageSummonFormPage({
           <MaterialIcon name="arrow_back" />
           BACK
         </button>
-        <button
-          type="button"
-          onClick={handlePrint}
-          className="btn btn-primary btn-lg min-w-[140px]"
-        >
-          <MaterialIcon name="print" />
-          PRINT
-        </button>
+        <PrintButton label="PRINT" />
       </div>
     </div>
   );

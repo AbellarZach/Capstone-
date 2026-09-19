@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { PriorityBadge } from "@/components/admin/PriorityBadge";
 import { MaterialIcon } from "@/components/admin/MaterialIcon";
+import { PrintButton } from "@/components/admin/PrintButton";
 
 export default function ComplaintUnsettledPage({
   params,
@@ -90,18 +91,32 @@ export default function ComplaintUnsettledPage({
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
-      <PageHeader
-        title={`UNSETTLED — Complaint #${complaint.complaintNo}`}
-        action={
-          <button
-            type="button"
-            onClick={() => router.push("/admin/complaints")}
-            className="text-sm font-medium text-primary hover:text-primary-dark"
-          >
-            ← Back to Complaints
-          </button>
-        }
-      />
+      <div className="no-print">
+        <PageHeader
+          title={`UNSETTLED — Complaint #${complaint.complaintNo}`}
+          action={
+            <button
+              type="button"
+              onClick={() => router.push("/admin/complaints")}
+              className="text-sm font-medium text-primary hover:text-primary-dark"
+            >
+              ← Back to Complaints
+            </button>
+          }
+        />
+      </div>
+
+      <div className="printable-content space-y-6">
+        {/* Print-only document header (hidden on screen) */}
+        <div className="print-only">
+          <h1 style={{ fontSize: "18pt", fontWeight: 700 }}>
+            Unsettled Case Summary — Complaint #{complaint.complaintNo}
+          </h1>
+          <p style={{ fontSize: "10pt", color: "#333" }}>
+            Date Filed: {complaint.dateFiled} · Category: {complaint.category} ·
+            Priority: {complaint.priority}
+          </p>
+        </div>
 
       {/* Case Overview Summary Header */}
       <div className="admin-card p-5 space-y-3 bg-white border border-gray-200 rounded-2xl shadow-sm">
@@ -408,8 +423,8 @@ export default function ComplaintUnsettledPage({
         </p>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-center pt-2">
+      {/* Action Buttons (screen only, hidden in print output) */}
+      <div className="no-print flex items-center justify-center gap-3 pt-2">
         <button
           type="button"
           onClick={() => router.push("/admin/complaints")}
@@ -417,6 +432,8 @@ export default function ComplaintUnsettledPage({
         >
           BACK
         </button>
+        <PrintButton label="PRINT SUMMARY" className="px-8 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors min-w-[160px]" />
+      </div>
       </div>
     </div>
   );

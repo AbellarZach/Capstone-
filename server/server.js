@@ -6,6 +6,7 @@ const path = require("path");
 
 const authRoutes = require("./routes/authRoutes");
 const complaintRoutes = require("./routes/complaintRoutes");
+const clientRoutes = require("./routes/clientRoutes");
 const hearingRoutes = require("./routes/hearingRoutes");
 const summonRoutes = require("./routes/summonRoutes");
 const reportRoutes = require("./routes/reportRoutes");
@@ -25,6 +26,7 @@ app.get("/", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/admin/complaints", complaintRoutes);
+app.use("/api/client", clientRoutes);
 app.use("/api/hearings", hearingRoutes);
 app.use("/api/summons", summonRoutes);
 app.use("/api/reports", reportRoutes);

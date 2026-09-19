@@ -116,18 +116,32 @@ export default function HearingStagePage({
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
-      <PageHeader
-        title={``}
-        action={
-          <button
-            type="button"
-            onClick={() => router.push("/admin/complaints")}
-            className="text-sm font-medium text-primary hover:text-primary-dark"
-          >
-            ← Back to Complaints
-          </button>
-        }
-      />
+      <div className="no-print">
+        <PageHeader
+          title={``}
+          action={
+            <button
+              type="button"
+              onClick={() => router.push("/admin/complaints")}
+              className="text-sm font-medium text-primary hover:text-primary-dark"
+            >
+              ← Back to Complaints
+            </button>
+          }
+        />
+      </div>
+
+      <div className="printable-content space-y-6">
+        {/* Print-only document header (hidden on screen) */}
+        <div className="print-only">
+          <h1 style={{ fontSize: "18pt", fontWeight: 700 }}>
+            Hearing Record — Complaint #{complaint.complaintNo} (Stage {stageNumber})
+          </h1>
+          <p style={{ fontSize: "10pt", color: "#333" }}>
+            Date Filed: {complaint.dateFiled} · Category: {complaint.category} ·
+            Hearing Date: {hearingDate} · Mediator: {assignedMediator}
+          </p>
+        </div>
 
       {/* Overview Header */}
       <div className="admin-card p-5 space-y-3">
@@ -259,8 +273,8 @@ export default function HearingStagePage({
           </div>
         </div>
 
-        {/* Action Buttons matching progress page layout */}
-        <div className="flex flex-wrap items-center justify-center gap-3 pt-4 border-t border-gray-100">
+        {/* Action Buttons matching progress page layout (screen only) */}
+        <div className="no-print flex flex-wrap items-center justify-center gap-3 pt-4 border-t border-gray-100">
           <button
             type="button"
             onClick={() => router.push("/admin/complaints")}
@@ -298,7 +312,9 @@ export default function HearingStagePage({
               Fourth Hearing
             </button>
           )}
+
         </div>
+      </div>
       </div>
     </div>
   );

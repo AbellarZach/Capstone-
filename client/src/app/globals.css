@@ -239,10 +239,12 @@ body {
    Form styling lives inline (style props) in each Kp* component.
    ================================================================ */
 
-/* ---------- @page: tells the browser how big the paper is ------ */
+/* ---------- @page: Letter (short bondpaper). margin:0 hides the
+   browser's own header/footer (date, title, URL) so only the page
+   content prints. Each .kp-page carries its own padding. ------ */
 @page {
   size: Letter;
-  margin: 0.45in;
+  margin: 0;
 }
 
 /* ---------- Page (short bondpaper, Letter 8.5x11in) --------------- */
@@ -257,6 +259,8 @@ body {
   font-size: 11pt;
   line-height: 1.45;
   overflow: hidden;
+  margin-left: 75px;
+  margin-top: 50px;
 }
 
 .kp-watermark {
@@ -294,12 +298,13 @@ body {
 .kp-header {
   text-align: center;
   margin-bottom: 0.15in;
+
 }
 
 .kp-form-number {
   position: absolute;
   top: 0.55in;
-  left: 0.65in;
+  left: 0.05in;
   font-size: 10pt;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -312,6 +317,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.22in;
+  margin-left: -100px;
 }
 
 .kp-logo {
@@ -441,7 +447,8 @@ body {
 }
 
 .kp-center {
-  text-align: center;
+  text-align: left;
+  margin-left: 40px;
 }
 
 .kp-tac-center {
@@ -598,12 +605,20 @@ body {
   flex: 1;
 }
 
-.kp-sig-label {
+.kp-sig-label1 {
   font-size: 11pt;
   font-weight: 400;
   margin-top: 0.04in;
   letter-spacing: 0.02em;
   margin-right: 70px;
+}
+
+.kp-sig-label {
+  font-size: 11pt;
+  font-weight: 400;
+  margin-top: 30px;
+  letter-spacing: 0.02em;
+  margin-right: 10px;
 }
 
 .kp-sig-sublabel {
@@ -644,11 +659,32 @@ body {
 }
 
 /* ================================================================
-   PRINT MEDIA — hide chrome, force exact page breaks
+   ADMIN PRINT SYSTEM — one reusable approach for all admin pages.
+   Screen UI is untouched; everything below only applies in print.
+   - Wrap the important page content in `.printable-content`.
+   - Mark screen-only UI (buttons, nav, filters) with `.no-print`.
+   - Use `.print-only` for print-only headers (hidden on screen).
    ================================================================ */
+.print-only {
+  display: none !important;
+}
+
 @media print {
   /* --- Hide all non-print UI --- */
-  .no-print {
+  .no-print,
+  button,
+  aside,
+  nav,
+  header,
+  [class*="sidebar"],
+  [class*="Sidebar"] {
+    display: none !important;
+  }
+
+  /* Buttons nested inside printable content must never print either */
+  .printable-content button,
+  .printable-content a.btn,
+  .printable-content [role="button"] {
     display: none !important;
   }
 
@@ -656,52 +692,263 @@ body {
     display: block !important;
   }
 
+  /* --- CRITICAL: release flex + min-height ancestors so pages fragment.
+         Without this, flex column roots can produce blank print output. --- */
+  html,
   body {
-    background: white;
+    min-height: auto !important;
+    height: auto !important;
+    display: block !important;
+    overflow: visible !important;
   }
 
-  /* Hide sidebar, aside, nav */
-  aside,
-  nav,
-  [class*="sidebar"],
-  [class*="Sidebar"] {
-    display: none !important;
+  body {
+    background: white !important;
+    color: #000 !important;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
-  /* Reset admin wrapper chrome */
-  .admin-card {
+  .min-h-screen,
+  .min-h-full,
+  .h-full {
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  /* Neutralize screen-only decoration that breaks printing */
+  .glass-card,
+  .overlay-enter,
+  .drawer-enter {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    animation: none !important;
     box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    background: transparent !important;
   }
 
-  #summon-print-area {
+  /* Reset admin layout chrome in print */
+  main {
+    padding: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    overflow: visible !important;
+  }
+
+  .admin-pl-wrap {
+    padding-left: 0 !important;
+    display: block !important;
+  }
+
+  .admin-content {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  /* Generic printable container: clean standalone document look */
+  .printable-content {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0.45in 0.5in !important;
+    background: white !important;
+    color: #000 !important;
+    overflow: visible !important;
+    float: none !important;
+    position: static !important;
+  }
+
+  .printable-content h1,
+  .printable-content h2,
+  .printable-content h3,
+  .printable-content h4 {
+    color: #000 !important;
+    break-after: avoid !important;
+  }
+
+  /* Keep cards readable on paper (no shadows, no screen rounding) */
+  .printable-content .admin-card {
+    box-shadow: none !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.375rem !important;
+    background: white !important;
+    color: #000 !important;
+    break-inside: avoid !important;
+    margin-bottom: 0.18in !important;
+  }
+
+  /* Readable tables that don't split rows across pages */
+  .printable-content table {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: auto !important;
+    font-size: 9pt !important;
+    color: #000 !important;
+    break-inside: auto !important;
+  }
+
+  .printable-content thead {
+    display: table-header-group !important;
+  }
+
+  .printable-content tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .printable-content th,
+  .printable-content td {
+    border-bottom: 1px solid #d1d5db !important;
+    padding: 0.08in 0.1in !important;
+    vertical-align: top !important;
+    word-break: break-word !important;
+    color: #000 !important;
+  }
+
+  .printable-content th {
+    background: #f1f5f9 !important;
+    font-weight: 700 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .printable-content .admin-table-wrap {
+    overflow: visible !important;
+  }
+
+  /* Charts (recharts): keep fixed heights + exact colors in print */
+  .printable-content .recharts-responsive-container,
+  .printable-content .recharts-wrapper {
+    visibility: visible !important;
+    display: block !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .printable-content svg {
+    max-width: 100% !important;
+  }
+
+  /* Images must fit the paper and never disappear */
+  .printable-content img {
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Form fields print as plain readable values (progress page) */
+  .printable-content input,
+  .printable-content select,
+  .printable-content textarea {
+    border: none !important;
+    border-bottom: 1px solid #9ca3af !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    color: #000 !important;
+    padding: 0.04in 0 !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+  }
+
+  .printable-content textarea {
+    border: 1px solid #9ca3af !important;
+    padding: 0.08in !important;
+  }
+
+  /* Report layout: single column on paper, sections stay together */
+  .report-print-area {
+    display: block !important;
+  }
+
+  .report-print-area .grid {
+    display: block !important;
+  }
+
+  .report-print-area .grid > * {
+    margin-bottom: 0.18in !important;
+    break-inside: avoid !important;
+  }
+
+  /* Summon page roots: release max-width/centering/spacing in print.
+     Summon uses its own .kp-page padding, so no extra padding here. */
+  .summon-page-root {
+    max-width: none !important;
+    margin: 0 !important;
+    display: block !important;
+    padding: 0 !important;
+  }
+
+  .summon-page-root > * + * {
+    margin-top: 0 !important;
+  }
+
+  .summon-page-root.printable-content {
+    padding: 0 !important;
+  }
+
+  #summon-print-area,
+  #summon-form {
     padding: 0 !important;
     margin: 0 !important;
+    max-width: none !important;
     border: none !important;
     box-shadow: none !important;
     background: transparent !important;
+    display: block !important;
+    visibility: visible !important;
   }
 
   /* Force each .kp-page to its own printed page */
   .kp-page {
+    position: static !important;
+    transform: none !important;
+    filter: none !important;
     box-shadow: none !important;
     border: none !important;
-    margin: 0 !important;
-    padding: 0.45in !important;
-    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0.5in 0.6in !important;
+    width: 7.5in !important;
+    max-width: 7.5in !important;
     min-height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    display: block !important;
+    visibility: visible !important;
+    float: none !important;
     page-break-after: always !important;
-    break-inside: avoid !important;
+    break-after: page !important;
+    break-inside: auto !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color: #000 !important;
   }
 
   .kp-page:last-child {
     page-break-after: auto !important;
+    break-after: auto !important;
   }
 
   /* Ensure watermark prints */
   .kp-watermark {
     opacity: 0.07 !important;
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .kp-logo {
+    visibility: visible !important;
   }
 }

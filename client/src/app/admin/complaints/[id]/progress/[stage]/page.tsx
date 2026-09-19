@@ -1,5 +1,11 @@
 "use client";
 
-import StageProgressPage from "../page";
+import ProgressView from "../_ProgressView";
 
-export default StageProgressPage;
+export default function ComplaintProgressStagePage({
+  params,
+}: {
+  params: Promise<{ id: string; stage: string }>;
+}) {
+  return <ProgressView params={params} />;
+}

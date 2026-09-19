@@ -7,6 +7,7 @@ import { complaintsApi, summonsApi } from "@/services/api";
 import type { Complaint } from "@/lib/types";
 import { MaterialIcon } from "@/components/admin/MaterialIcon";
 import { PageHeader } from "@/components/admin/PageHeader";
+import { printCurrentPage } from "@/components/admin/PrintButton";
 import SummonPaper from "@/components/admin/summon/SummonPaper";
 
 export default function GenerateSummonPage({
@@ -84,8 +85,10 @@ export default function GenerateSummonPage({
   };
 
   return (
-    <div className="space-y-5">
-      <PageHeader title="Generate Summon" />
+    <div className="summon-page-root printable-content space-y-5">
+      <div className="no-print">
+        <PageHeader title="Generate Summon" />
+      </div>
 
       {generated && (
         <div className="no-print rounded-xl border border-green-200 bg-green-50 p-4">
@@ -121,7 +124,7 @@ export default function GenerateSummonPage({
           <>
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={() => void printCurrentPage()}
               className="btn btn-secondary btn-lg"
             >
               <MaterialIcon name="print" className="text-lg" />

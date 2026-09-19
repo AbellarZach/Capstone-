@@ -1,11 +1,11 @@
 "use client";
 
 import { use, useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { hearingsApi } from "@/services/api";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { MaterialIcon } from "@/components/admin/MaterialIcon";
+import { PrintButton } from "@/components/admin/PrintButton";
 import SummonPaper from "@/components/admin/summon/SummonPaper";
 
 export default function SummonFormPage({
@@ -37,10 +37,6 @@ export default function SummonFormPage({
     initSummon();
   }, [initSummon]);
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const handleBack = async () => {
     try {
       await hearingsApi.save({
@@ -64,7 +60,7 @@ export default function SummonFormPage({
   }
 
   return (
-    <div className="space-y-5 max-w-4xl mx-auto">
+    <div className="summon-page-root printable-content space-y-5 max-w-4xl mx-auto">
       {/* Header controls (Hidden on print) */}
       <div className="no-print">
         <PageHeader
@@ -99,14 +95,7 @@ export default function SummonFormPage({
           <MaterialIcon name="arrow_back" />
           BACK
         </button>
-        <button
-          type="button"
-          onClick={handlePrint}
-          className="btn btn-primary btn-lg min-w-[140px]"
-        >
-          <MaterialIcon name="print" />
-          PRINT
-        </button>
+        <PrintButton label="PRINT" />
       </div>
     </div>
   );

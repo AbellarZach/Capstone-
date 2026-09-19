@@ -66,8 +66,8 @@ export default function KpForm8() {
       {/* Chairman signature */}
       <div className="kp-sig-block kp-sig-right kp-mt-lg">
         <div className="kp-sig-wrap">
-          <Line className="kp-w-40" />
           <p className="kp-sig-label">NICOLAS C. ANTIPUESTO</p>
+          <Line className="kp-w-40" />
           <p className="kp-sig-sublabel">Punong Barangay/Lupon Chairman</p>
         </div>
       </div>

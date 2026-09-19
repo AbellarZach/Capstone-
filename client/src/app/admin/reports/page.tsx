@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { GlassStatCard } from "@/components/admin/GlassStatCard";
 import { MaterialIcon } from "@/components/admin/MaterialIcon";
 import { PriorityBadge } from "@/components/admin/PriorityBadge";
+import { printCurrentPage } from "@/components/admin/PrintButton";
 import {
   CategoryPieChart,
   StatusPieChart,
@@ -180,9 +181,9 @@ export default function ReportsPage() {
     URL.revokeObjectURL(url);
   };
 
-  // Print Report / PDF
+  // Print Report / PDF (waits for charts + content to render first)
   const handlePrint = () => {
-    window.print();
+    void printCurrentPage();
   };
 
   // Available categories for dropdown
@@ -269,9 +270,9 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* Error Banner */}
+      {/* Error Banner (screen only) */}
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
+        <div className="no-print rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MaterialIcon name="error" className="text-xl text-red-600" />
@@ -439,8 +440,22 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* 3. Top 4 Glass Stat Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Printable report content (only this prints) */}
+      <div className="printable-content report-print-area space-y-6">
+        {/* Print-only report header (hidden on screen) */}
+        <div className="print-only">
+          <h1 style={{ fontSize: "18pt", fontWeight: 700 }}>
+            Barangay Gabi — Reports & Analytics
+          </h1>
+          <p style={{ fontSize: "10pt", color: "#333" }}>
+            Generated: {new Date().toLocaleString()}
+            {isFiltered ? " · Filtered view" : " · All records"}
+            {` · Total complaints: ${data?.stats.totalComplaints ?? 0} · Resolved rate: ${data?.stats.resolvedRate ?? 0}% · Active cases: ${data?.stats.activeCases ?? 0}`}
+          </p>
+        </div>
+
+        {/* 3. Top 4 Glass Stat Cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <GlassStatCard
           label="Total Complaints"
           value={loading ? "..." : (data?.stats.totalComplaints ?? 0)}
@@ -675,6 +690,7 @@ export default function ReportsPage() {
               )}
             </tbody>
           </table>
+        </div>
         </div>
       </div>
     </div>

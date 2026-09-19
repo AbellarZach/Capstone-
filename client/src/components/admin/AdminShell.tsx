@@ -34,7 +34,7 @@ export function AdminShell({
   return (
     <div className="min-h-screen bg-[var(--background)]">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="lg:pl-[var(--sidebar-width)]">
+      <div className="admin-pl-wrap lg:pl-[var(--sidebar-width)]">
         <main className="p-3 sm:p-5 lg:p-6">
           <div className="admin-content">{children}</div>
         </main>
